@@ -14,11 +14,11 @@ namespace ArgsTests.CLI.Controls
  
         public class TestFormViewModel : ObservableObject
         {
-            public string Name { get => Get<string>(); set => Set(value); }
+            public string? Name { get => Get<string>(); set => Set(value); }
             [FormReadOnly]
             public int Age { get; set; } = 33;
             [FormLabel("The Address")]
-            public string Address { get => Get<string>(); set => Set(value); }
+            public string? Address { get => Get<string>(); set => Set(value); }
 
             public TestFormViewModel()
             {

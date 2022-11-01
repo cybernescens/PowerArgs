@@ -12,7 +12,7 @@ namespace PowerArgs.Cli.Physics
 
     public static class IHaveVelocityEx
     {
-        public static ILifetimeManager CreateNextVelocityChangedLifetime(this IHaveVelocity el)
+        public static ILifetimeManager? CreateNextVelocityChangedLifetime(this IHaveVelocity el)
         {
             var lt = Lifetime.EarliestOf(el.Velocity.OnAngleChanged.CreateNextFireLifetime(), el.Velocity.OnSpeedChanged.CreateNextFireLifetime());
             return lt;
@@ -109,7 +109,7 @@ namespace PowerArgs.Cli.Physics
 
         [ThreadStatic]
         private static bool isEvaluating;
-        public Velocity(SpacialElement t) : base(t)
+        public Velocity(SpacialElement? t) : base(t)
         {
             Added.SubscribeOnce(() =>
             {
@@ -128,8 +128,8 @@ namespace PowerArgs.Cli.Physics
             });
         }
 
-        private static Dictionary<SpacialElement, Velocity> dynamicVelocities = new Dictionary<SpacialElement, Velocity>();
-        public static Velocity For(SpacialElement el)
+        private static Dictionary<SpacialElement?, Velocity> dynamicVelocities = new Dictionary<SpacialElement?, Velocity>();
+        public static Velocity For(SpacialElement? el)
         {
             if(el is IHaveVelocity)
             {

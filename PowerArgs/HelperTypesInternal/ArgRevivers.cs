@@ -13,14 +13,14 @@ namespace PowerArgs
     /// </summary>
     public static class ArgRevivers
     {
-        private static Dictionary<Type, Func<string, string, object>> revivers;
-        private static Dictionary<Type, Func<string, string, object>> Revivers
+        private static Dictionary<Type, Func<string, string?, object>> revivers;
+        private static Dictionary<Type, Func<string, string?, object>> Revivers
         {
             get
             {
                 if (revivers == null)
                 {
-                    revivers = new Dictionary<Type, Func<string, string, object>>();
+                    revivers = new Dictionary<Type, Func<string, string?, object>>();
                     LoadDefaultRevivers(revivers);
                 }
                 return revivers;
@@ -94,12 +94,12 @@ namespace PowerArgs
             return false;
         }
 
-        internal static object ReviveEnum(Type t, string value, bool ignoreCase)
+        internal static object ReviveEnum(Type t, string? value, bool ignoreCase)
         {
             if (value.Contains(","))
             {
                 int ret = 0;
-                var values = value.Split(',').Select(v => v.Trim());
+                IEnumerable<string?> values = value.Split(',').Select(v => v.Trim());
                 foreach (var enumValue in values)
                 {
                     try
@@ -130,7 +130,7 @@ namespace PowerArgs
             }
         }
 
-        private static int ParseEnumValue(Type t, string valueString, bool ignoreCase)
+        private static int ParseEnumValue(Type t, string? valueString, bool ignoreCase)
         {
             int rawInt;
 
@@ -155,14 +155,14 @@ namespace PowerArgs
         /// <param name="name">the name of the argument</param>
         /// <param name="value">The string value to revive</param>
         /// <returns>A revived object of the desired type</returns>
-        public static object Revive(Type t, string name, string value)
+        public static object Revive(Type t, string name, string? value)
         {
             if (t.IsArray || t.GetInterfaces().Contains(typeof(IList)))
             {
                 var list = t.GetInterfaces().Contains(typeof(IList)) && t.IsArray == false ? (IList)ObjectFactory.CreateInstance(t) : new List<object>();
                 var elementType = t.IsArray ? t.GetElementType() : t.GetGenericArguments()[0];
 
-                List<string> additionalParams;
+                List<string?> additionalParams;
                 if(ArgHook.HookContext.Current != null &&
                    ArgHook.HookContext.Current.CurrentArgument != null &&
                    ArgHook.HookContext.Current.ParserData.TryGetAndRemoveAdditionalExplicitParameters(ArgHook.HookContext.Current.CurrentArgument, out additionalParams))
@@ -264,7 +264,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="t">The type of object the reviver function can revive</param>
         /// <param name="reviverFunc">the function that revives a command line string, converting it into a consumable object</param>
-        public static void SetReviver(Type t, Func<string,string, object> reviverFunc)
+        public static void SetReviver(Type t, Func<string, string?, object> reviverFunc)
         {
             if (ArgRevivers.Revivers.ContainsKey(t))
             {
@@ -289,7 +289,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="t">the type to revive</param>
         /// <returns>the reviver function</returns>
-        public static Func<string,string,object> GetReviver(Type t)
+        public static Func<string, string?, object> GetReviver(Type t)
         {
             if (ArgRevivers.Revivers.ContainsKey(t))
             {
@@ -301,7 +301,7 @@ namespace PowerArgs
             }
         }
 
-        private static void LoadDefaultRevivers(Dictionary<Type, Func<string, string, object>> revivers)
+        private static void LoadDefaultRevivers(Dictionary<Type, Func<string, string?, object>> revivers)
         {
             revivers.Add(typeof(bool), (prop, val) =>
             {
@@ -393,7 +393,7 @@ namespace PowerArgs
             });
         }
 
-        private static bool TryParseConstant<T>(string constantIdentifier, out T ret) where T : struct
+        private static bool TryParseConstant<T>(string? constantIdentifier, out T ret) where T : struct
         {
             var match = GetConstants(typeof(T)).Where(c => c.Name == constantIdentifier);
             if(match.Count() == 0)

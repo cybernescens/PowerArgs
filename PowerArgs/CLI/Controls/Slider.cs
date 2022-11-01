@@ -19,34 +19,36 @@ namespace PowerArgs.Cli
             Max = 100;
             Width = 10;
             Height = 1;
-            ILifetime focusLt = null;
+            ILifetime? focusLt = null;
             
             this.Ready.SubscribeOnce(() =>
             {
-                this.SubscribeForLifetime(ObservableObject.AnyProperty, () =>
-                {
-                    if (Min > Max) throw new InvalidOperationException("Max must be >= Min");
-                    if (Value > Max) throw new InvalidOperationException("Value must be <= Max");
-                    if (Value < Min) throw new InvalidOperationException("Value must be >= Min");
-
-                }, this);
-
-                this.Focused.SubscribeForLifetime(() =>
-                {
-                    focusLt?.Dispose();
-                    focusLt = new Lifetime();
-                    Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.RightArrow, null, SlideUp, focusLt);
-                    Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.LeftArrow, null, SlideDown, focusLt);
-                    Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.UpArrow, null, SlideUp, focusLt);
-                    Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.DownArrow, null, SlideDown, focusLt);
-                    if (EnableWAndSKeysForUpDown)
+                this.SubscribeForLifetime(this, ObservableObject.AnyProperty,
+                    () =>
                     {
-                        Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.D, null, SlideUp, focusLt);
-                        Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.A, null, SlideDown, focusLt);
-                    }
-                }, this);
+                        if (Min > Max) throw new InvalidOperationException("Max must be >= Min");
+                        if (Value > Max) throw new InvalidOperationException("Value must be <= Max");
+                        if (Value < Min) throw new InvalidOperationException("Value must be >= Min");
 
-                this.Unfocused.SubscribeForLifetime(() => focusLt?.Dispose() , this);
+                    });
+
+                this.Focused.SubscribeForLifetime(this,
+                    () =>
+                    {
+                        focusLt?.Dispose();
+                        focusLt = new Lifetime();
+                        Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.RightArrow, null, SlideUp, focusLt);
+                        Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.LeftArrow, null, SlideDown, focusLt);
+                        Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.UpArrow, null, SlideUp, focusLt);
+                        Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.DownArrow, null, SlideDown, focusLt);
+                        if (EnableWAndSKeysForUpDown)
+                        {
+                            Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.D, null, SlideUp, focusLt);
+                            Application.FocusManager.GlobalKeyHandlers.PushForLifetime(ConsoleKey.A, null, SlideDown, focusLt);
+                        }
+                    });
+
+                this.Unfocused.SubscribeForLifetime(this, () => focusLt?.Dispose());
             });
         }
 

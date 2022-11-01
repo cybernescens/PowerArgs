@@ -230,7 +230,7 @@ namespace ArgsTests
         {
             System.Threading.Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 
-            var args = new string[] { "/string:stringValue", "/i:34", "/d:33.33", "/b" };
+            var args = new string?[] { "/string:stringValue", "/i:34", "/d:33.33", "/b" };
 
             var parsed = Args.Parse<BasicArgsSC>(args);
 
@@ -243,24 +243,24 @@ namespace ArgsTests
         [TestMethod]
         public void TestConstantParsing()
         {
-            string[] args;
+            string?[] args;
             BasicArgs parsed;
 
-            args = new string[] { "-double", nameof(double.PositiveInfinity) };
+            args = new string?[] { "-double", nameof(double.PositiveInfinity) };
             parsed = Args.Parse<BasicArgs>(args);
             Assert.IsTrue(double.IsPositiveInfinity(parsed.Double));
             Assert.IsFalse(double.IsNegativeInfinity(parsed.Double));
 
-            args = new string[] { "-double", nameof(double.NegativeInfinity) };
+            args = new string?[] { "-double", nameof(double.NegativeInfinity) };
             parsed = Args.Parse<BasicArgs>(args);
             Assert.IsTrue(double.IsNegativeInfinity(parsed.Double));
             Assert.IsFalse(double.IsPositiveInfinity(parsed.Double));
 
-            args = new string[] { "-int", nameof(int.MaxValue) };
+            args = new string?[] { "-int", nameof(int.MaxValue) };
             parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(int.MaxValue, parsed.Int);
 
-            args = new string[] { "-int", nameof(int.MinValue) };
+            args = new string?[] { "-int", nameof(int.MinValue) };
             parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(int.MinValue, parsed.Int);
         }
@@ -323,7 +323,7 @@ namespace ArgsTests
             DateTime d = DateTime.Today;
             System.Threading.Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 
-            var args = new string[] { "-String", "stringValue", "-i", "34", "-d", "33.33", "-b", "-byte", "255", "-g", g.ToString(), "-t", d.ToString(), "-l", long.MaxValue+"", "-li", "100,200,300", "-bytes", "10,20,30", "-uri", "http://www.bing.com", "-ipaddress", IPAddress.Loopback.ToString() };
+            var args = new string?[] { "-String", "stringValue", "-i", "34", "-d", "33.33", "-b", "-byte", "255", "-g", g.ToString(), "-t", d.ToString(), "-l", long.MaxValue+"", "-li", "100,200,300", "-bytes", "10,20,30", "-uri", "http://www.bing.com", "-ipaddress", IPAddress.Loopback.ToString() };
             BasicArgs parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual("stringValue", parsed.String);
             Assert.AreEqual(34, parsed.Int);
@@ -354,7 +354,7 @@ namespace ArgsTests
             DateTime d = DateTime.Today;
             System.Threading.Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 
-            var args = new string[] { "-String", "stringValue", "-i", "34", "-d", "33.33", "-b", "-byte", "255", "-g", g.ToString(), "-t", d.ToString(), "-l", long.MaxValue + "", "-li", "100,200,300", "-bytes", "10,20,30", "-uri", "http://www.bing.com", "-ipaddress", IPAddress.Loopback.ToString() };
+            var args = new string?[] { "-String", "stringValue", "-i", "34", "-d", "33.33", "-b", "-byte", "255", "-g", g.ToString(), "-t", d.ToString(), "-l", long.MaxValue + "", "-li", "100,200,300", "-bytes", "10,20,30", "-uri", "http://www.bing.com", "-ipaddress", IPAddress.Loopback.ToString() };
 
             BasicArgs parsed = (BasicArgs)Args.Parse(typeof(BasicArgs), args);
 
@@ -396,7 +396,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestNegativeNumber()
         {
-            var args = new string[] { "-int", "-1" };
+            var args = new string?[] { "-int", "-1" };
             BasicArgs parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(-1, parsed.Int);
         }
@@ -404,7 +404,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestSingleElementInArray()
         {
-            var args = new string[] { "-bytes", "10" };
+            var args = new string?[] { "-bytes", "10" };
 
             BasicArgs parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(1, parsed.ArrayOfBytes.Length);
@@ -414,7 +414,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestSingleElementInList()
         {
-            var args = new string[] { "-li", "10" };
+            var args = new string?[] { "-li", "10" };
 
             BasicArgs parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(1, parsed.List.Count);
@@ -424,7 +424,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestPositionArgsPS()
         {
-            var args = new string[] { "value1", "value2" };
+            var args = new string?[] { "value1", "value2" };
 
             PositionedArgs parsed = Args.Parse<PositionedArgs>(args);
 
@@ -436,7 +436,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestPositionArgsSC()
         {
-            var args = new string[] { "value1", "value2" };
+            var args = new string?[] { "value1", "value2" };
 
             PositionedArgs parsed = Args.Parse<PositionedArgs>(args);
 
@@ -447,7 +447,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestPositionArgsMixed()
         {
-            var args = new string[] { "value1", "-Second", "value2" };
+            var args = new string?[] { "value1", "-Second", "value2" };
 
             PositionedArgs parsed = Args.Parse<PositionedArgs>(args);
 
@@ -459,7 +459,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestCustomReviver()
         {
-            var args = new string[] { "-point", "50,25" };
+            var args = new string?[] { "-point", "50,25" };
 
             var parsed = Args.Parse<PointArgs>(args);
 
@@ -471,19 +471,19 @@ namespace ArgsTests
         [TestMethod]
         public void TestEnum()
         {
-            var args = new string[] { "-option", "Option3" };
+            var args = new string?[] { "-option", "Option3" };
 
             var parsed = Args.Parse<EnumArgs>(args);
             Assert.AreEqual(BasicEnum.Option3, parsed.Option);
 
-            parsed = Args.Parse<EnumArgs>(new string[] { }); // Test the default value
+            parsed = Args.Parse<EnumArgs>(new string?[] { }); // Test the default value
             Assert.AreEqual(BasicEnum.Option2, parsed.Option);
         }
 
         [TestMethod]
         public void TestArgDefaultValue()
         {
-            var args = new string[] { };
+            var args = new string?[] { };
 
             var parsed = Args.Parse<EnumArgs2>(args);
             Assert.AreEqual(BasicEnum.Option2, parsed.Option);
@@ -493,7 +493,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestEnumWithFlags()
         {
-            var args = new string[] { "-o", "Zero,One,Two" };
+            var args = new string?[] { "-o", "Zero,One,Two" };
 
             var parsed = Args.Parse<EnumArgsWithFlags>(args);
             Assert.AreEqual(EnumWithFlags.Zero | EnumWithFlags.One | EnumWithFlags.Two, parsed.Option);
@@ -502,7 +502,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestEnumWithFlagValues()
         {
-            var args = new string[] { "-o", "0,1,2" };
+            var args = new string?[] { "-o", "0,1,2" };
 
             var parsed = Args.Parse<EnumArgsWithFlags>(args);
             Assert.AreEqual(EnumWithFlags.Zero | EnumWithFlags.One | EnumWithFlags.Two, parsed.Option);
@@ -511,7 +511,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestEnumWithValues()
         {
-            var args = new string[] { "-o", "2" };
+            var args = new string?[] { "-o", "2" };
 
             var parsed = Args.Parse<EnumArgsWithFlags>(args);
             Assert.AreEqual(EnumWithFlags.Two, parsed.Option);
@@ -520,7 +520,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestEnumWithValuesPreAggregated()
         {
-            var args = new string[] { "-o", "3" };
+            var args = new string?[] { "-o", "3" };
 
             var parsed = Args.Parse<EnumArgsWithFlags>(args);
             Assert.AreEqual(EnumWithFlags.One | EnumWithFlags.Two, parsed.Option);
@@ -530,7 +530,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgReviversReviveEnumThrowsOnInvalidValue()
         {
-            var args = new string[] { "-option", "NonExistentOption" };
+            var args = new string?[] { "-option", "NonExistentOption" };
 
             try
             {
@@ -547,7 +547,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgReviversReviveEnumThrowsOnInvalidValueInFlagList()
         {
-            var args = new string[] { "-o", "One,NonExistentOption, Two" };
+            var args = new string?[] { "-o", "One,NonExistentOption, Two" };
 
             try
             {
@@ -564,7 +564,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestEnumCaseSensitivity()
         {
-            var args = new string[] { "-o", "option3" };
+            var args = new string?[] { "-o", "option3" };
 
             var parsed = Args.Parse<EnumArgs>(args);
             Assert.AreEqual(BasicEnum.Option3, parsed.Option);
@@ -575,7 +575,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestSwitch()
         {
-            var args = new string[] { "-bool", "-string", "string" };
+            var args = new string?[] { "-bool", "-string", "string" };
 
             var parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(true, parsed.Bool);
@@ -585,7 +585,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestSwitchWithFalseValueSpecified()
         {
-            var args = new string[] { "-bool", "false", "-string", "string" };
+            var args = new string?[] { "-bool", "false", "-string", "string" };
 
             var parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(false, parsed.Bool);
@@ -595,7 +595,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestSwitchWithZeroValueSpecified()
         {
-            var args = new string[] { "-bool", "0", "-string", "string" };
+            var args = new string?[] { "-bool", "0", "-string", "string" };
 
             var parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(false, parsed.Bool);
@@ -605,7 +605,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestSwitchWithTrueValueSpecified()
         {
-            var args = new string[] { "-bool", "true", "-string", "string" };
+            var args = new string?[] { "-bool", "true", "-string", "string" };
 
             var parsed = Args.Parse<BasicArgs>(args);
             Assert.AreEqual(true, parsed.Bool);
@@ -615,7 +615,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestRevivalFailure()
         {
-            var args = new string[] { "-int", "notAnInt" };
+            var args = new string?[] { "-int", "notAnInt" };
 
             try
             {
@@ -630,7 +630,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgsThrowsOnUnexpectedNamedArgument()
         {
-            var args = new string[] { "-bool", "-string", "string", "-extraArg", "extraValue" };
+            var args = new string?[] { "-bool", "-string", "string", "-extraArg", "extraValue" };
 
             try
             {
@@ -648,7 +648,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgParserThrowsOnUnexpectedArgument()
         {
-            var args = new string[] { "-bool", "-string", "string", "extraValue" };
+            var args = new string?[] { "-bool", "-string", "string", "extraValue" };
 
             try
             {
@@ -665,7 +665,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgsThrowsOnUnexpectedPositionalArgument()
         {
-            var args = new string[] { "A", "B", "extraarg", };
+            var args = new string?[] { "A", "B", "extraarg", };
 
             try
             {
@@ -682,7 +682,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgParserThrowsOnDuplicateNamedArguments()
         {
-            var args = new string[] { "-string", "string", "-string", "specifiedTwice" };
+            var args = new string?[] { "-string", "string", "-string", "specifiedTwice" };
 
             try
             {
@@ -699,7 +699,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgsThrowsOnDuplicateMixedCaseNamedArguments()
         {
-            var args = new string[] { "-string", "string", "-String", "specifiedTwice" };
+            var args = new string?[] { "-string", "string", "-String", "specifiedTwice" };
 
             try
             {
@@ -716,7 +716,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgParserThrowsOnDuplicateArgumentUsingSlashColonFormat()
         {
-            var args = new string[] { "/string:string", "/string:specifiedTwice" };
+            var args = new string?[] { "/string:string", "/string:specifiedTwice" };
 
             try
             {
@@ -810,7 +810,7 @@ namespace ArgsTests
             Assert.AreEqual(-111, parsed.SomeInteger);
         }
 
-        private void AssertConversion(string commandLine, params string[] expectedResult)
+        private void AssertConversion(string? commandLine, params string?[] expectedResult)
         {
             var result = Args.Convert(commandLine);
 

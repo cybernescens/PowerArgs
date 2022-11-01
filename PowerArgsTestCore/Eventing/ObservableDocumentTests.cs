@@ -8,19 +8,19 @@ namespace ArgsTests
 
     public class MyDocument : ObservableObject
     {
-        public string DocumentName { get => Get<string>(); set => Set(value); }
+        public string? DocumentName { get => Get<string>(); set => Set(value); }
 
-        public ObservableCollection<int> Numbers { get => Get<ObservableCollection<int>>(); set => Set(value); }
-        public ObservableCollection<Person> Customers { get => Get<ObservableCollection<Person>>(); set => Set(value); }
+        public ObservableCollection<int>? Numbers { get => Get<ObservableCollection<int>>(); set => Set(value); }
+        public ObservableCollection<Person?> Customers { get => Get<ObservableCollection<Person>>(); set => Set(value); }
     }
 
     public class Person : ObservableObject
     {
-        public string FirstName { get => Get<string>(); set => Set(value); }
+        public string? FirstName { get => Get<string>(); set => Set(value); }
 
-        public Person Mom { get => Get<Person>(); set => Set(value); }
+        public Person? Mom { get => Get<Person>(); set => Set(value); }
 
-        public ObservableCollection<Person> Friends { get => Get<ObservableCollection<Person>>(); set => Set(value); }
+        public ObservableCollection<Person?> Friends { get => Get<ObservableCollection<Person>>(); set => Set(value); }
     }
 
     [TestClass]
@@ -67,7 +67,7 @@ namespace ArgsTests
             assertIncrement(()=> root.Numbers.Add(1));
             assertIncrement(() => root.Numbers.Clear());
 
-            var originalCustomers = new ObservableCollection<Person>();
+            var originalCustomers = new ObservableCollection<Person?>();
             assertIncrement(()=> root.Customers = originalCustomers);
 
             var joe = new Person();
@@ -75,12 +75,12 @@ namespace ArgsTests
             assertIncrement(() => joe.FirstName = "Joe");
             assertIncrement(() => root.Customers.Remove(joe));
             assertNoIncrement(()=> joe.FirstName = "bob"); // removed so this should not trigger a change
-            assertIncrement(() => root.Customers = new ObservableCollection<Person>());
+            assertIncrement(() => root.Customers = new ObservableCollection<Person?>());
             assertNoIncrement(() => originalCustomers.Add(new Person())); // removed so this should not trigger a change
             assertIncrement(() => root.Customers.Add(new Person()));
-            assertIncrement(()=> root.Customers[0].Friends = new ObservableCollection<Person>());
+            assertIncrement(()=> root.Customers[0].Friends = new ObservableCollection<Person?>());
             assertIncrement(() => root.Customers[0].Friends.Add(new Person()));
-            assertIncrement(() => root.Customers[0].Friends[0].Friends = new ObservableCollection<Person>() { new Person() });
+            assertIncrement(() => root.Customers[0].Friends[0].Friends = new ObservableCollection<Person?>() { new Person() });
             assertIncrement(() => root.Customers[0].Friends[0].Friends.Add(new Person()));
             
             var leafFriend = root.Customers[0].Friends[0].Friends[0];

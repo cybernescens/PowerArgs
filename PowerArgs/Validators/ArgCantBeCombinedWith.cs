@@ -17,7 +17,7 @@ namespace PowerArgs
         /// The expression text that was passed into the constructor.  This can either be an alias argument or a boolean expression of arguments (e.g. Argument1 | Argument2). Valid operators are
         /// and '&amp;', or '|', and not '!'.  Grouping with parentheses is also supported.  Example: "(Argument1 &amp; Argumrnt2) | Argument3".
         /// </summary>
-        public string ExpressionText { get; private set; }
+        public string? ExpressionText { get; private set; }
 
         /// <summary>
         /// Creates a new ArgCantBeCombinedWith hook given an expression. This can either be an alias argument or a boolean expression of arguments (e.g. Argument1 | Argument2). Valid operators are
@@ -26,7 +26,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="expression">This can either be an alias argument or a boolean expression of arguments (e.g. Argument1 | Argument2). Valid operators are
         /// and '&amp;', or '|', and not '!'.  Grouping with parentheses is also supported.  Example: "(Argument1 &amp; Argumrnt2) | Argument3".</param>
-        public ArgCantBeCombinedWith(string expression)
+        public ArgCantBeCombinedWith(string? expression)
         {
             this.AfterPopulatePropertiesPriority = 1;
             try

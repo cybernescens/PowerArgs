@@ -27,7 +27,7 @@ namespace PowerArgs
         /// <param name="message">the prompt message</param>
         /// <param name="options">the options to choose from</param>
         /// <returns>The selected value</returns>
-        public string Prompt(string message, params string[] options)
+        public string? Prompt(string? message, params string[] options)
         {
             return Prompt(new ConsoleString(message, ConsoleColor.Yellow), options);
         }
@@ -38,7 +38,7 @@ namespace PowerArgs
         /// <param name="message">the prompt message</param>
         /// <param name="options">the options to choose from</param>
         /// <returns>The selected value</returns>
-        public string Prompt(ConsoleString message, params string[] options)
+        public string? Prompt(ConsoleString message, params string[] options)
         {
             var optionsString = new ConsoleString("(" + string.Join("/", options) + ")", ConsoleColor.Cyan);
             var prompt = message + new ConsoleString(" ") + optionsString + ": ";
@@ -63,7 +63,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="about">The message to display.  'Are you sure?' will be apended.</param>
         /// <returns>true if they indicate yes and false if they indicate no.</returns>
-        public bool IsUserSure(string about)
+        public bool IsUserSure(string? about)
         {
             return IsUserSure(new ConsoleString(about, ConsoleColor.Yellow));
         }
@@ -74,7 +74,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="about">The message to display.  'Are you sure?' will be apended.</param>
         /// <returns>true if they indicate yes and false if they indicate no.</returns>
-        public bool IsUserSure(ConsoleString about)
+        public bool IsUserSure(ConsoleString? about)
         {
             if (about.EndsWith("."))
             {
@@ -97,7 +97,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="message">the prompt message</param>
         /// <returns>the input that the user entered</returns>
-        public string PromptForLine(string message)
+        public string? PromptForLine(string? message)
         {
             if(message.EndsWith(": ") == false)
             {

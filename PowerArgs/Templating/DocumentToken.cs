@@ -63,9 +63,9 @@ namespace PowerArgs
         /// </summary>
         /// <param name="type">The type to lookup</param>
         /// <returns>The literal string value expected of a token of the given type</returns>
-        public static string GetTokenTypeValue(DocumentTokenType type)
+        public static string? GetTokenTypeValue(DocumentTokenType type)
         {
-            string ret;
+            string? ret;
             if(TryGetTokenTypeValue(type, out ret) == false)
             {
                 throw new ArgumentException("The type '"+type+"' does not have a constant string value");
@@ -80,7 +80,7 @@ namespace PowerArgs
         /// <param name="type">The type to lookup</param>
         /// <param name="val">The literal string value expected of a token of the given type</param>
         /// <returns>true if 'val' was populated, false otherwise</returns>
-        public static bool TryGetTokenTypeValue(DocumentTokenType type, out string val)
+        public static bool TryGetTokenTypeValue(DocumentTokenType type, out string? val)
         {
             if (type == DocumentTokenType.BeginReplacementSegment)
             {
@@ -113,7 +113,7 @@ namespace PowerArgs
         /// <param name="stringVal">The value to try to parse</param>
         /// <param name="type">The reference to populate if parsing is successful</param>
         /// <returns>True if the string could be successfully mapped to a DocumentTokenType, false otherwise</returns>
-        public static bool TryParseDocumentTokenType(string stringVal, out DocumentTokenType type)
+        public static bool TryParseDocumentTokenType(string? stringVal, out DocumentTokenType type)
         {
             if (stringVal == "{{")
             {
@@ -146,7 +146,7 @@ namespace PowerArgs
         /// <param name="text">The text to tokenize</param>
         /// <param name="sourceLocation">A string describing the source of the text.  This could be a text file path or some other identifier.</param>
         /// <returns>A list of tokens</returns>
-        public static List<DocumentToken> Tokenize(string text, string sourceLocation)
+        public static List<DocumentToken> Tokenize(string? text, string sourceLocation)
         {
             var tokenizer = new DocumentTokenizer();
             tokenizer.SourceFileLocation = sourceLocation;
@@ -196,14 +196,14 @@ namespace PowerArgs
             }
         }
 
-        private static List<string> Delimiters
+        private static List<string?> Delimiters
         {
             get
             {
-                List<string> ret = new List<string>();
+                List<string?> ret = new List<string?>();
                 foreach (DocumentTokenType type in Enum.GetValues(typeof(DocumentTokenType)))
                 {
-                    string textVal;
+                    string? textVal;
                     if (TryGetTokenTypeValue(type, out textVal))
                     {
                         ret.Add(textVal);

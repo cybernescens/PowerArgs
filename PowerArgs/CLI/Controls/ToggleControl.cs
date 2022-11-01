@@ -13,7 +13,7 @@ namespace PowerArgs.Cli
         /// Gets or sets the current On / Off value
         /// </summary>
         public bool On { get => Get<bool>(); set => Set(value); }
-        private Label valueLabel;
+        private Label? valueLabel;
 
         public string OnLabel { get; set; } =  " On  " ;
 
@@ -30,9 +30,9 @@ namespace PowerArgs.Cli
             valueLabel = ProtectedPanel.Add(new Label());
             SynchronizeForLifetime(nameof(On), ()=>Update(125), this);
             SynchronizeForLifetime(nameof(IsVisible), () => Update(0), this);
-            Focused.SubscribeForLifetime(() => Update(0), this);
-            Unfocused.SubscribeForLifetime(() => Update(0), this);
-            KeyInputReceived.SubscribeForLifetime(k => On = k.Key == ConsoleKey.Enter ? !On : On, this);
+            Focused.SubscribeForLifetime(this, () => Update(0));
+            Unfocused.SubscribeForLifetime(this, () => Update(0));
+            KeyInputReceived.SubscribeForLifetime(this, k => On = k.Key == ConsoleKey.Enter ? !On : On);
             Ready.SubscribeOnce(() => Update(0));
         }
 

@@ -1,78 +1,85 @@
-﻿using System.Linq;
+﻿namespace PowerArgs.Cli;
 
-namespace PowerArgs.Cli
+/// <summary>
+///     Represents the orientation of a 2d visual
+/// </summary>
+public enum Orientation
 {
     /// <summary>
-    /// Represents the orientation of a 2d visual
+    ///     Vertical orientation (up and down)
     /// </summary>
-    public enum Orientation
+    Vertical,
+
+    /// <summary>
+    ///     Horizontal orientation (left and right)
+    /// </summary>
+    Horizontal
+}
+
+/// <summary>
+///     A panel that handles stacking child controls
+/// </summary>
+public class StackPanel : ConsolePanel
+{
+    /// <summary>
+    ///     Creates a new stack panel
+    /// </summary>
+    public StackPanel()
     {
-        /// <summary>
-        /// Vertical orientation (up and down)
-        /// </summary>
-        Vertical,
-        /// <summary>
-        /// Horizontal orientation (left and right)
-        /// </summary>
-        Horizontal,
+        SubscribeForLifetime(this, nameof(Bounds), RedoLayout);
+        SubscribeForLifetime(this, nameof(Margin), RedoLayout);
+        Controls.Added.SubscribeForLifetime(this, ControlsAdded);
+        Controls.Changed.SubscribeForLifetime(this, RedoLayout);
     }
 
     /// <summary>
-    /// A panel that handles stacking child controls
+    ///     Gets or sets the orientation of the control
     /// </summary>
-    public class StackPanel : ConsolePanel
+    public Orientation Orientation
     {
-        /// <summary>
-        /// Gets or sets the orientation of the control
-        /// </summary>
-        public Orientation Orientation { get { return Get<Orientation>(); } set { Set(value); } }
+        get => Get<Orientation>();
+        set => Set(value);
+    }
 
-        /// <summary>
-        /// Gets or sets the value, in number of console pixels to space between child elements.  Defaults to 0.
-        /// </summary>
-        public int Margin{ get { return Get<int>(); } set { Set(value); } }
+    /// <summary>
+    ///     Gets or sets the value, in number of console pixels to space between child elements.  Defaults to 0.
+    /// </summary>
+    public int Margin
+    {
+        get => Get<int>();
+        set => Set(value);
+    }
 
-        /// <summary>
-        /// When set to true, the panel will size itself automatically based on its children.
-        /// </summary>
-        public bool AutoSize { get; set; }
+    /// <summary>
+    ///     When set to true, the panel will size itself automatically based on its children.
+    /// </summary>
+    public bool AutoSize { get; set; }
 
-        /// <summary>
-        /// Creates a new stack panel
-        /// </summary>
-        public StackPanel()
+    private void ControlsAdded(ConsoleControl obj)
+    {
+        obj.SynchronizeForLifetime(nameof(Bounds), RedoLayout, Controls.GetMembershipLifetime(obj));
+    }
+
+    private void RedoLayout()
+    {
+        if (IsExpired || IsExpiring) return;
+
+        if (Orientation == Orientation.Vertical)
         {
-            SubscribeForLifetime(nameof(Bounds), RedoLayout, this);
-            SubscribeForLifetime(nameof(Margin), RedoLayout, this);
-            Controls.Added.SubscribeForLifetime(Controls_Added, this);
-            Controls.Changed.SubscribeForLifetime(RedoLayout, this);
-        }
-
-        private void Controls_Added(ConsoleControl obj)
-        {
-            obj.SynchronizeForLifetime(nameof(Bounds), RedoLayout, Controls.GetMembershipLifetime(obj));
-        }
-
-        private void RedoLayout()
-        {
-            if (this.IsExpired || this.IsExpiring) return;
-            if(Orientation == Orientation.Vertical)
+            var h = Layout.StackVertically(Margin, Controls);
+            if (AutoSize)
             {
-                int h = Layout.StackVertically(Margin, Controls);
-                if(AutoSize)
-                {
-                    Height = h;
-                    Width = Controls.Count == 0 ? 0 : Controls.Select(c => c.X + c.Width).Max();
-                }
+                Height = h;
+                Width = Controls.Count == 0 ? 0 : Controls.Select(c => c.X + c.Width).Max();
             }
-            else
+        }
+        else
+        {
+            var w = Layout.StackHorizontally(Margin, Controls);
+            if (AutoSize)
             {
-                int w = Layout.StackHorizontally(Margin, Controls);
-                if(AutoSize)
-                {
-                    Width = w;
-                    Height = Controls.Count == 0 ? 0 : Controls.Select(c => c.Y + c.Height).Max();
-                }
+                Width = w;
+                Height = Controls.Count == 0 ? 0 : Controls.Select(c => c.Y + c.Height).Max();
             }
         }
     }

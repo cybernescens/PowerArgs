@@ -10,7 +10,7 @@ namespace PowerArgs.Cli
     {
         public int Skip { get; set; }
         public int Take { get; set; }
-        public string Filter { get; set; }
+        public string? Filter { get; set; }
         public List<SortExpression> SortOrder { get; private set; }
 
         public CollectionQuery()
@@ -18,7 +18,7 @@ namespace PowerArgs.Cli
             SortOrder = new List<SortExpression>();
         }
 
-        public CollectionQuery(int skip, int take, string filter, params SortExpression[] sortOrder) : this()
+        public CollectionQuery(int skip, int take, string? filter, params SortExpression[] sortOrder) : this()
         {
             this.Skip = skip;
             this.Take = take;

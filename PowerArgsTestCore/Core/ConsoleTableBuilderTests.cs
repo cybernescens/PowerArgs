@@ -14,11 +14,11 @@ namespace ArgsTests
         {
             ConsoleTableBuilder builder = new ConsoleTableBuilder();
 
-            var columns = new List<ConsoleString>() { new ConsoleString("NAME"), new ConsoleString("ADDRESS"), new ConsoleString("DESCRIPTION") };
-            var rows = new List<List<ConsoleString>>()
+            var columns = new List<ConsoleString?>() { new ConsoleString("NAME"), new ConsoleString("ADDRESS"), new ConsoleString("DESCRIPTION") };
+            var rows = new List<List<ConsoleString?>>()
             {
-                new List<ConsoleString>(){ new ConsoleString("Adam Abdelhamed"), new ConsoleString("One Microsoft Way, Redmond WA 98052"), new ConsoleString("The author of PowerArgs, the world's greatest command line parser and invoker.  Hooray for PowerArgs!  We love PowerArgs so much cuz it is awesome and great.  Yay!!!!  In fact, PowerArgs is so fun that nothing in the entire universe is more fun.  ") },
-                new List<ConsoleString>(){ new ConsoleString("Alicia Abdelhamed"), new ConsoleString("Two Microsoft Way, Redmond WA 98052"), new ConsoleString("The wife of the author of PowerArgs, the world's greatest command line parser and invoker.  Hooray for PowerArgs!") },
+                new List<ConsoleString?>(){ new ConsoleString("Adam Abdelhamed"), new ConsoleString("One Microsoft Way, Redmond WA 98052"), new ConsoleString("The author of PowerArgs, the world's greatest command line parser and invoker.  Hooray for PowerArgs!  We love PowerArgs so much cuz it is awesome and great.  Yay!!!!  In fact, PowerArgs is so fun that nothing in the entire universe is more fun.  ") },
+                new List<ConsoleString?>(){ new ConsoleString("Alicia Abdelhamed"), new ConsoleString("Two Microsoft Way, Redmond WA 98052"), new ConsoleString("The wife of the author of PowerArgs, the world's greatest command line parser and invoker.  Hooray for PowerArgs!") },
             };
 
 
@@ -41,11 +41,11 @@ Alicia Abdelhamed   Two Microsoft Way, Redmond WA 98052   The wife of the author
             ConsoleProvider.Current.BufferWidth = 160;
             ConsoleTableBuilder builder = new ConsoleTableBuilder();
 
-            var columns = new List<ConsoleString>() { new ConsoleString("NAME"), new ConsoleString("ADDRESS"), new ConsoleString("DESCRIPTION") };
-            var rows = new List<List<ConsoleString>>()
+            var columns = new List<ConsoleString?>() { new ConsoleString("NAME"), new ConsoleString("ADDRESS"), new ConsoleString("DESCRIPTION") };
+            var rows = new List<List<ConsoleString?>>()
             {
-                new List<ConsoleString>(){ new ConsoleString("Adam Abdelhamed"), new ConsoleString("One Microsoft Way, Redmond WA 98052"), new ConsoleString("The author of PowerArgs, the world's greatest command line parser and invoker.  Hooray for PowerArgs!  We love PowerArgs so much cuz it is awesome and great.  Yay!!!!  In fact, PowerArgs is so fun that nothing in the entire universe is more fun.  ") },
-                new List<ConsoleString>(){ new ConsoleString("Alicia Abdelhamed"), new ConsoleString("Two Microsoft Way, Redmond WA 98052"), new ConsoleString("The wife of the author of PowerArgs, the world's greatest command line parser and invoker.  Hooray for PowerArgs!") },
+                new List<ConsoleString?>(){ new ConsoleString("Adam Abdelhamed"), new ConsoleString("One Microsoft Way, Redmond WA 98052"), new ConsoleString("The author of PowerArgs, the world's greatest command line parser and invoker.  Hooray for PowerArgs!  We love PowerArgs so much cuz it is awesome and great.  Yay!!!!  In fact, PowerArgs is so fun that nothing in the entire universe is more fun.  ") },
+                new List<ConsoleString?>(){ new ConsoleString("Alicia Abdelhamed"), new ConsoleString("Two Microsoft Way, Redmond WA 98052"), new ConsoleString("The wife of the author of PowerArgs, the world's greatest command line parser and invoker.  Hooray for PowerArgs!") },
             };
 
             var columnOverflowBehaviors = new List<ColumnOverflowBehavior>()
@@ -141,10 +141,10 @@ Alic...      Two Microsoft     The wife of the author of PowerArgs, the world's 
             ConsoleProvider.Current.BufferWidth = 160;
             ConsoleTableBuilder builder = new ConsoleTableBuilder();
 
-            var columns = new List<ConsoleString>() { new ConsoleString("Word 1"), new ConsoleString("Word 2") };
-            var rows = new List<List<ConsoleString>>()
+            var columns = new List<ConsoleString?>() { new ConsoleString("Word 1"), new ConsoleString("Word 2") };
+            var rows = new List<List<ConsoleString?>>()
             {
-                new List<ConsoleString>(){new ConsoleString(" ThisIsAVeryLongWord"), new ConsoleString("Hello. ThisIsAVeryLongWord ThisIsAnother AnotherVeryLongWord")}
+                new List<ConsoleString?>(){new ConsoleString(" ThisIsAVeryLongWord"), new ConsoleString("Hello. ThisIsAVeryLongWord ThisIsAnother AnotherVeryLongWord")}
             };
 
             var columnOverflowBehaviors = new List<ColumnOverflowBehavior>()

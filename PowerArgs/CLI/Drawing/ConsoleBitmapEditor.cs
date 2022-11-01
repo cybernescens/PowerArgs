@@ -1,124 +1,130 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿namespace PowerArgs.Cli;
 
-namespace PowerArgs.Cli
+/// <summary>
+///     A console control that can be used to interactively edit a
+///     ConsoleBitmap
+/// </summary>
+public class ConsoleBitmapEditor : ConsolePanel
 {
+    private readonly PixelControl cursor;
+    private readonly ConsolePanel frame;
+    private readonly ConsoleBitmapViewer viewer;
+
     /// <summary>
-    /// A console control that can be used to interactively edit a 
-    /// ConsoleBitmap
+    ///     Creates an editor with a new bitmap of the given size
     /// </summary>
-    public class ConsoleBitmapEditor : ConsolePanel
+    /// <param name="w">the width of the empty bitmap to create</param>
+    /// <param name="h">the height of the empty bitmap to create</param>
+    public ConsoleBitmapEditor(int w, int h) : this(new ConsoleBitmap(w, h)) { }
+
+    /// <summary>
+    ///     Creates an editor for the given bitmap
+    /// </summary>
+    /// <param name="bitmap">the bitmap to edit</param>
+    public ConsoleBitmapEditor(ConsoleBitmap bitmap)
     {
-        /// <summary>
-        /// An event that fires when the user moves the cursor
-        /// </summary>
-        public Event CursorMoved { get; private set; } = new Event();
+        Bitmap = bitmap;
+        Width = bitmap.Width + 2;
+        Height = bitmap.Height + 2;
+        currentFg = ConsoleString.DefaultForegroundColor;
+        currentBg = ConsoleString.DefaultBackgroundColor;
 
-        /// <summary>
-        /// The bitmap being edited by this control
-        /// </summary>
-        public ConsoleBitmap Bitmap { get; private set; }
+        frame = Add(new ConsolePanel { Background = ConsoleColor.White }).Fill();
+        viewer = frame.Add(new ConsoleBitmapViewer { Bitmap = bitmap }).Fill(padding: new Thickness(1, 1, 1, 1));
+        cursor = frame.Add(
+            new PixelControl {
+                IsVisible = false, X = 1, Y = 1,
+                Value = new ConsoleCharacter('C', ConsoleColor.White, ConsoleColor.Cyan)
+            }); // place at top left
 
-        /// <summary>
-        /// Gets the current cursor position in terms of which pixel it
-        /// is covering on the target bitmap
-        /// </summary>
-        public Point CursorPosition => new Point(cursor.X - 1, cursor.Y - 1);
+        frame.CanFocus = true;
 
-        /// <summary>
-        /// An event that fires when a change has been made to the bitmap by way
-        /// of a user edit
-        /// </summary>
-        public Event<ConsoleBitmapChange> BitmapChanged { get; private set; } = new Event<ConsoleBitmapChange>();
-        private PixelControl cursor;
-        private ConsolePanel frame;
-        private ConsoleBitmapViewer viewer;
-        private RGB currentFg { get => Get<RGB>(); set => Set(value); }
-        private RGB currentBg { get => Get<RGB>(); set => Set(value); }
+        frame.Focused.SubscribeForLifetime(cursor, () => cursor.IsVisible = true);
+        frame.Unfocused.SubscribeForLifetime(cursor, () => cursor.IsVisible = false);
+        cursor.CanFocus = false;
 
-        /// <summary>
-        /// Creates an editor with a new bitmap of the given size
-        /// </summary>
-        /// <param name="w">the width of the empty bitmap to create</param>
-        /// <param name="h">the height of the empty bitmap to create</param>
-        public ConsoleBitmapEditor(int w, int h) : this(new ConsoleBitmap(w, h)) { }
+        frame.KeyInputReceived.SubscribeForLifetime(cursor, key => HandleCursorKeyPress(key));
 
-        /// <summary>
-        /// Creates an editor for the given bitmap
-        /// </summary>
-        /// <param name="bitmap">the bitmap to edit</param>
-        public ConsoleBitmapEditor(ConsoleBitmap bitmap)
-        {
-            this.Bitmap = bitmap;
-            this.Width = bitmap.Width + 2;
-            this.Height = bitmap.Height + 2;
-            currentFg = ConsoleString.DefaultForegroundColor;
-            currentBg = ConsoleString.DefaultBackgroundColor;
-
-            frame = Add(new ConsolePanel() { Background = ConsoleColor.White }).Fill();
-            viewer = frame.Add(new ConsoleBitmapViewer() { Bitmap = bitmap }).Fill(padding: new Thickness(1, 1, 1, 1));
-            cursor = frame.Add(new PixelControl() { IsVisible = false, X = 1, Y = 1, Value = new ConsoleCharacter('C', ConsoleColor.White, ConsoleColor.Cyan) }); // place at top left
-            frame.CanFocus = true;
-
-            frame.Focused.SubscribeForLifetime(() => cursor.IsVisible = true, cursor);
-            frame.Unfocused.SubscribeForLifetime(() => cursor.IsVisible = false, cursor);
-            cursor.CanFocus = false;
-
-            frame.KeyInputReceived.SubscribeForLifetime((key) => HandleCursorKeyPress(key), cursor);
-
-            
-            frame.AddedToVisualTree.SubscribeOnce(()=>
-            {
-                Application.SetTimeout(() =>
-                {
-                    if (this.IsExpired == false)
-                    {
-                        frame.TryFocus();
-                        CursorMoved.Fire();
-                    }
-                }, TimeSpan.FromMilliseconds(10));
+        frame.AddedToVisualTree.SubscribeOnce(
+            () => {
+                Application.SetTimeout(
+                    () => {
+                        if (IsExpired == false)
+                        {
+                            frame.TryFocus();
+                            CursorMoved.Fire();
+                        }
+                    },
+                    TimeSpan.FromMilliseconds(10));
             });
-        }
+    }
 
-        private class ColorObject
+    /// <summary>
+    ///     An event that fires when the user moves the cursor
+    /// </summary>
+    public Event CursorMoved { get; } = new();
+
+    /// <summary>
+    ///     The bitmap being edited by this control
+    /// </summary>
+    public ConsoleBitmap Bitmap { get; private set; }
+
+    /// <summary>
+    ///     Gets the current cursor position in terms of which pixel it
+    ///     is covering on the target bitmap
+    /// </summary>
+    public Point CursorPosition => new(cursor.X - 1, cursor.Y - 1);
+
+    /// <summary>
+    ///     An event that fires when a change has been made to the bitmap by way
+    ///     of a user edit
+    /// </summary>
+    public Event<ConsoleBitmapChange> BitmapChanged { get; } = new();
+
+    private RGB currentFg
+    {
+        get => Get<RGB>();
+        set => Set(value);
+    }
+
+    private RGB currentBg
+    {
+        get => Get<RGB>();
+        set => Set(value);
+    }
+
+    public void UpdateBitmap(ConsoleBitmap bitmap)
+    {
+        Bitmap = bitmap;
+        viewer.Bitmap = bitmap;
+        Width = bitmap.Width + 2;
+        Height = bitmap.Height + 2;
+
+        if (cursor.X > Bitmap.Width + 1)
         {
-            [FormLabel("")]
-            public ConsoleColor Color { get; set; }
+            cursor.X = 0;
+            CursorMoved.Fire();
         }
-
-        public void UpdateBitmap(ConsoleBitmap bitmap)
+        else if (cursor.Y > Bitmap.Height + 1)
         {
-            this.Bitmap = bitmap;
-            viewer.Bitmap = bitmap;
-            this.Width = bitmap.Width + 2;
-            this.Height = bitmap.Height + 2;
-
-            if(cursor.X > Bitmap.Width+1)
-            {
-                cursor.X = 0;
-                CursorMoved.Fire();
-            }
-            else if(cursor.Y > Bitmap.Height + 1)
-            {
-                cursor.Y = 0;
-                CursorMoved.Fire();
-            }
+            cursor.Y = 0;
+            CursorMoved.Fire();
         }
+    }
 
-        /// <summary>
-        /// Creates a set of standard buttons that a wrapped control can include.
-        /// </summary>
-        /// <returns>a set of buttons</returns>
-        public IEnumerable<Button> CreateStandardButtons()
-        {
-            var changeFgButton = new Button() { Shortcut = new KeyboardShortcut(ConsoleKey.F, ConsoleModifiers.Alt) };
+    /// <summary>
+    ///     Creates a set of standard buttons that a wrapped control can include.
+    /// </summary>
+    /// <returns>a set of buttons</returns>
+    public IEnumerable<Button?> CreateStandardButtons()
+    {
+        var changeFgButton = new Button { Shortcut = new KeyboardShortcut(ConsoleKey.F, ConsoleModifiers.Alt) };
 
-            changeFgButton.Pressed.SubscribeForLifetime(async () =>
-            {
-                var colorObj = new ColorObject() { Color = currentFg };
-                var form = ConsoleApp.Current.LayoutRoot.Add(new Form(FormOptions.FromObject(colorObj)));
+        changeFgButton.Pressed.SubscribeForLifetime(
+            this,
+            async () => {
+                var colorObj = new ColorObject { Color = currentFg };
+                var form = Application.LayoutRoot.Add(new Form(FormOptions.FromObject(colorObj)));
                 form.Width = 30;
                 form.Height = 1;
                 form.X = changeFgButton.AbsoluteX;
@@ -127,20 +133,21 @@ namespace PowerArgs.Cli
                 var dd = form.Descendents.WhereAs<Dropdown>().First();
                 var focusWorked = dd.TryFocus();
                 dd.KeyInputReceived.Fire(new ConsoleKeyInfo(' ', ConsoleKey.Enter, false, false, false));
-                dd.Focused.SubscribeOnce(() =>
-                {
-                    currentFg = colorObj.Color;
-                    form.Dispose();
-                    frame.TryFocus();
-                });
-            }, this);
+                dd.Focused.SubscribeOnce(
+                    () => {
+                        currentFg = colorObj.Color;
+                        form.Dispose();
+                        frame.TryFocus();
+                    });
+            });
 
-            var changeBgButton = new Button() { Shortcut = new KeyboardShortcut(ConsoleKey.B, ConsoleModifiers.Alt) };
+        var changeBgButton = new Button { Shortcut = new KeyboardShortcut(ConsoleKey.B, ConsoleModifiers.Alt) };
 
-            changeBgButton.Pressed.SubscribeForLifetime(() =>
-            {
-                var colorObj = new ColorObject() { Color = currentBg };
-                var form = ConsoleApp.Current.LayoutRoot.Add(new Form(FormOptions.FromObject(colorObj)));
+        changeBgButton.Pressed.SubscribeForLifetime(
+            this,
+            () => {
+                var colorObj = new ColorObject { Color = currentBg };
+                var form = Application.LayoutRoot.Add(new Form(FormOptions.FromObject(colorObj)));
                 form.Width = 30;
                 form.Height = 1;
                 form.X = changeFgButton.AbsoluteX;
@@ -149,108 +156,128 @@ namespace PowerArgs.Cli
                 var dd = form.Descendents.WhereAs<Dropdown>().First();
                 var focusWorked = dd.TryFocus();
                 dd.KeyInputReceived.Fire(new ConsoleKeyInfo(' ', ConsoleKey.Enter, false, false, false));
-                dd.Focused.SubscribeOnce(() =>
-                {
-                    currentBg = colorObj.Color;
-                    form.Dispose();
-                    frame.TryFocus();
-                });
-            }, this);
+                dd.Focused.SubscribeOnce(
+                    () => {
+                        currentBg = colorObj.Color;
+                        form.Dispose();
+                        frame.TryFocus();
+                    });
+            });
 
-            this.SynchronizeForLifetime(nameof(currentFg), () =>
-            {
+        SynchronizeForLifetime(
+            nameof(currentFg),
+            () => {
                 var displayColor = Foreground;
                 changeFgButton.Text = "FG: ".ToConsoleString() + currentFg.ToString().ToConsoleString(displayColor);
-            }, this);
-            this.SynchronizeForLifetime(nameof(currentBg), () =>
-            {
+            },
+            this);
+
+        SynchronizeForLifetime(
+            nameof(currentBg),
+            () => {
                 var displayColor = Foreground;
                 changeBgButton.Text = "BG: ".ToConsoleString() + currentBg.ToString().ToConsoleString(displayColor);
-            }, this);
+            },
+            this);
 
-            yield return changeFgButton;
-            yield return changeBgButton;
+        yield return changeFgButton;
+        yield return changeBgButton;
+    }
 
-        }
-        
-        private void HandleCursorKeyPress(ConsoleKeyInfo key)
+    private void HandleCursorKeyPress(ConsoleKeyInfo key)
+    {
+        if (key.Key == ConsoleKey.LeftArrow && cursor.X > 1)
         {
-            if (key.Key == ConsoleKey.LeftArrow && cursor.X > 1)
+            cursor.X--;
+            CursorMoved.Fire();
+        }
+        else if (key.Key == ConsoleKey.RightArrow && cursor.X < Bitmap.Width)
+        {
+            cursor.X++;
+            CursorMoved.Fire();
+        }
+        else if (key.Key == ConsoleKey.UpArrow && cursor.Y > 1)
+        {
+            cursor.Y--;
+            CursorMoved.Fire();
+        }
+        else if ((key.Key == ConsoleKey.DownArrow || key.Key == ConsoleKey.Enter) && cursor.Y < Bitmap.Height)
+        {
+            cursor.Y++;
+            CursorMoved.Fire();
+        }
+        else if (key.Key == ConsoleKey.Backspace)
+        {
+            Bitmap.Pixels[CursorPosition.X, CursorPosition.Y] = new ConsoleCharacter(' ');
+
+            if (cursor.X > 1)
             {
                 cursor.X--;
-                CursorMoved.Fire();
             }
-            else if (key.Key == ConsoleKey.RightArrow && cursor.X < Bitmap.Width)
-            {
-                cursor.X++;
-                CursorMoved.Fire();
-            }
-            else if (key.Key == ConsoleKey.UpArrow && cursor.Y > 1)
-            {
-                cursor.Y--;
-                CursorMoved.Fire();
-            }
-            else if ((key.Key == ConsoleKey.DownArrow || key.Key == ConsoleKey.Enter) && cursor.Y < Bitmap.Height)
-            {
-                cursor.Y++;
-                CursorMoved.Fire();
-            }
-            else if (key.Key == ConsoleKey.Backspace)
-            {
-                Bitmap.Pixels[CursorPosition.X][CursorPosition.Y] = new ConsoleCharacter(' ');
 
-                if (cursor.X > 1)
-                {
-                    cursor.X--;
-                }
-
-                CursorMoved.Fire();
-            }
-            else if (ShouldIgnore(key))
-            {
-                // ignore
-            }
-            else
-            {
-                var targetX = cursor.X - 1;
-                var targetY = cursor.Y - 1;
-                var previous = Bitmap.GetPixel(targetX, targetY);
-                var pen = new ConsoleCharacter(key.KeyChar, currentFg, currentBg);
-                Bitmap.DrawPoint(pen, targetX, targetY);
-                if (pen.EqualsIn(previous) == false)
-                {
-                    BitmapChanged.Fire(new ConsoleBitmapChange(targetX, targetY, previous, pen, Bitmap));
-                }
-                cursor.X = cursor.X < Bitmap.Width ? cursor.X + 1 : cursor.X;
-                CursorMoved.Fire();
-            }
+            CursorMoved.Fire();
         }
-
-        private bool ShouldIgnore(ConsoleKeyInfo key)
+        else if (ShouldIgnore(key))
         {
-            if (key.KeyChar == '\u0000') return true;
-            if (key.Key == ConsoleKey.Enter) return true;
-            return false;
+            // ignore
+        }
+        else
+        {
+            var targetX = cursor.X - 1;
+            var targetY = cursor.Y - 1;
+            var previous = Bitmap.GetPixel(targetX, targetY);
+            var pen = new ConsoleCharacter(key.KeyChar, currentFg, currentBg);
+            Bitmap.DrawPoint(pen, targetX, targetY);
+            if (pen.EqualsIn(previous) == false)
+            {
+                BitmapChanged.Fire(new ConsoleBitmapChange(targetX, targetY, previous, pen, Bitmap));
+            }
+
+            cursor.X = cursor.X < Bitmap.Width ? cursor.X + 1 : cursor.X;
+            CursorMoved.Fire();
         }
     }
 
-    public class ConsoleBitmapChange : IUndoRedoAction
+    private bool ShouldIgnore(ConsoleKeyInfo key)
     {
-        private int x;
-        private int y;
-        ConsoleCharacter? previousValue;
-        ConsoleCharacter newValue;
-        ConsoleBitmap bitmap;
-        public ConsoleBitmapChange(int x, int y, ConsoleCharacter? previousValue, in ConsoleCharacter newValue, ConsoleBitmap bitmap)
-        {
-            this.x = x;
-            this.y = y;
-            this.previousValue = previousValue;
-            this.newValue = newValue;
-            this.bitmap = bitmap;
-        }
-        public void Do() => bitmap.DrawPoint(newValue, x, y);
-        public void Redo() => Do();
-        public void Undo() => bitmap.DrawPoint(previousValue.HasValue ? previousValue.Value : new ConsoleCharacter(' '), x, y);
+        if (key.KeyChar == '\u0000') return true;
+        if (key.Key == ConsoleKey.Enter) return true;
+
+        return false;
     }
+
+    private class ColorObject
+    {
+        [FormLabel("")]
+        public ConsoleColor Color { get; set; }
+    }
+}
+
+public class ConsoleBitmapChange : IUndoRedoAction
+{
+    private readonly ConsoleBitmap? bitmap;
+    private readonly ConsoleCharacter newValue;
+    private readonly ConsoleCharacter? previousValue;
+    private readonly int x;
+    private readonly int y;
+
+    public ConsoleBitmapChange(
+        int x,
+        int y,
+        ConsoleCharacter? previousValue,
+        in ConsoleCharacter newValue,
+        ConsoleBitmap? bitmap)
+    {
+        this.x = x;
+        this.y = y;
+        this.previousValue = previousValue;
+        this.newValue = newValue;
+        this.bitmap = bitmap;
+    }
+
+    public void Do() => bitmap.DrawPoint(newValue, x, y);
+    public void Redo() => Do();
+
+    public void Undo() =>
+        bitmap.DrawPoint(previousValue.HasValue ? previousValue.Value : new ConsoleCharacter(' '), x, y);
 }

@@ -21,7 +21,7 @@ namespace PowerArgs
         /// <typeparam name="T">The command line argument definition scaffold type</typeparam>
         /// <param name="template">The template to use or null to use the default template that's built into PowerArgs</param>
         /// <returns>The usage document</returns>
-        public static ConsoleString GenerateUsageFromTemplate<T>(string template = null)
+        public static ConsoleString? GenerateUsageFromTemplate<T>(string? template = null)
         {
             return GenerateUsageFromTemplate(new CommandLineArgumentsDefinition(typeof(T)), template);
         }
@@ -32,7 +32,7 @@ namespace PowerArgs
         /// <param name="t">The command line argument definition scaffold type</param>
         /// <param name="template">The template to use or null to use the default template that's built into PowerArgs</param>
         /// <returns>The usage document</returns>
-        public static ConsoleString GenerateUsageFromTemplate(Type t, string template = null)
+        public static ConsoleString? GenerateUsageFromTemplate(Type t, string? template = null)
         {
             return GenerateUsageFromTemplate(new CommandLineArgumentsDefinition(t), template);
         }
@@ -44,7 +44,7 @@ namespace PowerArgs
         /// <param name="template">The template to use or null to use the default template that's built into PowerArgs</param>
         /// <param name="templateSourceLocation">The source of the template, usually a file name</param>
         /// <returns>The usage document</returns>
-        public static ConsoleString GenerateUsageFromTemplate(CommandLineArgumentsDefinition def, string template = null, string templateSourceLocation = null)
+        public static ConsoleString? GenerateUsageFromTemplate(CommandLineArgumentsDefinition def, string? template = null, string templateSourceLocation = null)
         {
             bool needsContextCleanup = false;
             if(ArgHook.HookContext.Current == null)
@@ -87,7 +87,7 @@ namespace PowerArgs
         /// <param name="deleteFileAfterBrowse">True if the file should be deleted after browsing</param>
         /// <param name="waitForBrowserExit">True if you'd like this method to block until the browser is closed.  This only works for browsers that start a new process when opened with a document.</param>
         /// <returns>The usage document as a string</returns>
-        public static string ShowUsageInBrowser<T>(string template = null, string outputFileName = null, bool deleteFileAfterBrowse = true, bool waitForBrowserExit = true)
+        public static string? ShowUsageInBrowser<T>(string? template = null, string outputFileName = null, bool deleteFileAfterBrowse = true, bool waitForBrowserExit = true)
         {
             return ShowUsageInBrowser(new CommandLineArgumentsDefinition(typeof(T)), template, outputFileName, deleteFileAfterBrowse, waitForBrowserExit);
         }
@@ -101,7 +101,7 @@ namespace PowerArgs
         /// <param name="deleteFileAfterBrowse">True if the file should be deleted after browsing</param>
         /// <param name="waitForBrowserExit">True if you'd like this method to block until the browser is closed.  This only works for browsers that start a new process when opened with a document.</param>
         /// <returns>The usage document as a string</returns>
-        public static string ShowUsageInBrowser(CommandLineArgumentsDefinition def, string template = null, string outputFileName = null, bool deleteFileAfterBrowse = true, bool waitForBrowserExit = true)
+        public static string? ShowUsageInBrowser(CommandLineArgumentsDefinition def, string? template = null, string outputFileName = null, bool deleteFileAfterBrowse = true, bool waitForBrowserExit = true)
         {
             var usage = ArgUsage.GenerateUsageFromTemplate(def, template ?? UsageTemplates.BrowserTemplate);
             outputFileName = outputFileName ?? Path.GetTempFileName().ToLower().Replace(".tmp", ".html");
@@ -137,7 +137,7 @@ namespace PowerArgs
     public static class UsageTemplates
     {
 
-        public const string ConsoleTemplate =
+        public const string? ConsoleTemplate =
 @"{{if HasDescription}}
 
 {{ Description !}}
@@ -197,7 +197,7 @@ Examples{{each example in Examples}}
 !{{if}}
 ";
 
-        public const string BrowserTemplate =
+        public const string? BrowserTemplate =
 @"<!DOCTYPE html>
 <html xmlns='http://www.w3.org/1999/xhtml'>
 <head>

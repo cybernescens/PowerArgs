@@ -38,7 +38,7 @@ namespace ArgsTests
         {
             var exp = "\"a b c\"";
             var parsed = Args.Parse<ArgsWithExpression>("-e", exp);
-            bool eval = parsed.Expression.Evaluate(new Dictionary<string, bool>() { { "\"a b c\"", true } });
+            bool eval = parsed.Expression.Evaluate(new Dictionary<string?, bool>() { { "\"a b c\"", true } });
             Assert.IsTrue(eval);
             Assert.AreEqual(exp, parsed.Expression.ToString());
         }
@@ -61,8 +61,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBooleanExpressionReplay()
         {
-            Dictionary<string, bool> variableValues = new Dictionary<string, bool>
-            {
+            Dictionary<string?, bool> variableValues = new Dictionary<string?, bool> {
                 {"cake", true},
                 {"eatIt", true},
             };
@@ -76,8 +75,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBooleanExpressionsSimpleOr()
         {
-            Dictionary<string, bool> variableValues = new Dictionary<string, bool>
-            {
+            Dictionary<string?, bool> variableValues = new Dictionary<string?, bool> {
                 {"a", false},
                 {"bb", false},
             };
@@ -91,8 +89,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBooleanExpressionsSimpleNot()
         {
-            Dictionary<string, bool> variableValues = new Dictionary<string, bool>
-            {
+            Dictionary<string?, bool> variableValues = new Dictionary<string?, bool> {
                 {"a", false},
                 {"bb", false},
             };
@@ -106,8 +103,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBooleanExpressionsSimpleAnd()
         {
-            Dictionary<string, bool> variableValues = new Dictionary<string, bool>
-            {
+            Dictionary<string?, bool> variableValues = new Dictionary<string?, bool> {
                 {"a", false},
                 {"bb", false},
             };
@@ -124,8 +120,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBooleanExpressionsSimpleGroups()
         {
-            Dictionary<string, bool> variableValues = new Dictionary<string, bool>
-            {
+            Dictionary<string?, bool> variableValues = new Dictionary<string?, bool> {
                 {"a", false},
                 {"bb", false},
             };
@@ -142,8 +137,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBooleanExpressionsGroupsWithNot()
         {
-            Dictionary<string, bool> variableValues = new Dictionary<string, bool>
-            {
+            Dictionary<string?, bool> variableValues = new Dictionary<string?, bool> {
                 {"a", false},
                 {"bb", false},
             };
@@ -160,8 +154,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBooleanExpressionsComplexGroups()
         {
-            Dictionary<string, bool> variableValues = new Dictionary<string, bool>
-            {
+            Dictionary<string?, bool> variableValues = new Dictionary<string?, bool> {
                 {"a", false},
                 {"bb", false},
                 {"c", false},
@@ -187,8 +180,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBooleanExpressionsComplexGroupsWithNots()
         {
-            Dictionary<string, bool> variableValues = new Dictionary<string, bool>
-            {
+            Dictionary<string?, bool> variableValues = new Dictionary<string?, bool> {
                 {"a", false},
                 {"bb", false},
                 {"c", false},

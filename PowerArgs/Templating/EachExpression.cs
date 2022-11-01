@@ -41,7 +41,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">The context that contains information about the document being rendered</param>
         /// <returns>The rendered contents of the each loop</returns>
-        public ConsoleString Evaluate(DocumentRendererContext context)
+        public ConsoleString? Evaluate(DocumentRendererContext context)
         {
             var collection = context.EvaluateExpression(this.CollectionVariableExpressionToken.Value);
             if (collection == null)
@@ -53,7 +53,7 @@ namespace PowerArgs
             {
                 throw new DocumentRenderException("'" + this.CollectionVariableExpressionToken.Value + "' does not resolve to a collection", this.CollectionVariableExpressionToken);
             }
-            ConsoleString ret = ConsoleString.Empty;
+            ConsoleString? ret = ConsoleString.Empty;
             int index = 0;
             var iterationVariableName = this.IterationVariableNameToken.Value + "-index";
             foreach(var item in (IEnumerable)collection)

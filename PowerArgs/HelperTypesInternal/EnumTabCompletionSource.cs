@@ -16,7 +16,7 @@ namespace PowerArgs
             wrappedSource = new SimpleTabCompletionSource(options) { MinCharsBeforeCyclingBegins = 0};
         }
 
-        public bool TryComplete(TabCompletionContext context, out string completion)
+        public bool TryComplete(TabCompletionContext context, out string? completion)
         {
             if(context.TargetArgument != target)
             {

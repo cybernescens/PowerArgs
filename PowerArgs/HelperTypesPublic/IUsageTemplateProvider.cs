@@ -7,7 +7,7 @@ namespace PowerArgs
 {
     internal static class UsageTemplateProvider
     {
-        public static ConsoleString GetUsage(Type usageTemplateProviderType, CommandLineArgumentsDefinition definition)
+        public static ConsoleString? GetUsage(Type usageTemplateProviderType, CommandLineArgumentsDefinition definition)
         {
             if (usageTemplateProviderType.GetInterfaces().Contains(typeof(IUsageTemplateProvider)) == false)
             {
@@ -15,7 +15,7 @@ namespace PowerArgs
             }
 
             var provider = ObjectFactory.CreateInstance(usageTemplateProviderType) as IUsageTemplateProvider;
-            string template = provider.GetTemplate();
+            string? template = provider.GetTemplate();
             var usage = ArgUsage.GenerateUsageFromTemplate(definition, template);
             return usage;
         }
@@ -30,7 +30,7 @@ namespace PowerArgs
         /// Gets the usage template to render
         /// </summary>
         /// <returns>usage template to render</returns>
-        string GetTemplate();
+        string? GetTemplate();
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ namespace PowerArgs
         /// gets the default console usage template
         /// </summary>
         /// <returns>the default console usage template</returns>
-        public string GetTemplate()
+        public string? GetTemplate()
         {
             return UsageTemplates.ConsoleTemplate;
         }
@@ -57,7 +57,7 @@ namespace PowerArgs
         /// gets the default browser usage template
         /// </summary>
         /// <returns>the default browser usage template</returns>
-        public string GetTemplate()
+        public string? GetTemplate()
         {
             return UsageTemplates.BrowserTemplate;
         }

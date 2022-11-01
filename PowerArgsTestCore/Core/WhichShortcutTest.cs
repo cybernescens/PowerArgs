@@ -7,7 +7,7 @@ namespace PowerArgsTestCore.Core
 {
     public class WhichShortcutHook : ArgHook
     {
-        public string ArgVal { get; set; }
+        public string? ArgVal { get; set; }
         public override void AfterPopulateProperty(HookContext context)
         {
             ArgVal = context.CmdLineArgs.Where(a => a.ToLower() == "-v" || a.ToLower() == "-vv").Single();

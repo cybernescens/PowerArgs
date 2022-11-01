@@ -1,140 +1,120 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 
-namespace PowerArgs
+namespace PowerArgs;
+
+/// <summary>
+///     A singleton text writer that can be used to intercept console output.
+/// </summary>
+public class ConsoleOutInterceptor : TextWriter
 {
+    private static readonly Lazy<ConsoleOutInterceptor> interceptor = new(() => new ConsoleOutInterceptor());
+    
+    private readonly object lockObject = new();
+    private readonly List<ConsoleCharacter> intercepted = new();
+
+    private ConsoleOutInterceptor() { }
+
     /// <summary>
-    /// A singleton text writer that can be used to intercept console output.
+    ///     returns true if the instance is initialized and is intercepting
     /// </summary>
-    public class ConsoleOutInterceptor : TextWriter
+    public bool IsInitialized { get; private set; }
+
+    /// <summary>
+    ///     Gets the interceptor, initializing it if needed.
+    /// </summary>
+    public static ConsoleOutInterceptor Instance => interceptor.Value;
+
+    /// <summary>
+    ///     Returns System.Text.Encoding.Default
+    /// </summary>
+    public override Encoding Encoding => Encoding.Default;
+
+    /// <summary>
+    ///     Attaches the interceptor to the Console so that it starts intercepting output
+    /// </summary>
+    public void Attach()
     {
-        private static Lazy<ConsoleOutInterceptor> _interceptor = new Lazy<ConsoleOutInterceptor>(() => new ConsoleOutInterceptor());
+        IsInitialized = true;
+        Console.SetOut(this);
+    }
 
+    /// <summary>
+    ///     Detaches the interceptor.  Console output will be written as normal.
+    /// </summary>
+    public void Detach()
+    {
+        var standardOutput = new StreamWriter(Console.OpenStandardOutput());
+        standardOutput.AutoFlush = true;
+        Console.SetOut(standardOutput);
+        IsInitialized = false;
+    }
 
-        /// <summary>
-        /// returns true if the instance is initialized and is intercepting
-        /// </summary>
-        public bool IsInitialized { get; private set; }
-
-        /// <summary>
-        /// Gets the interceptor, initializing it if needed.  
-        /// </summary>
-        public static ConsoleOutInterceptor Instance
+    /// <summary>
+    ///     Intercepts the Write event
+    /// </summary>
+    /// <param name="buffer">the string buffer</param>
+    /// <param name="index">the start index</param>
+    /// <param name="count">number of chars to write</param>
+    public override void Write(char[] buffer, int index, int count)
+    {
+        lock (lockObject)
         {
-            get
-            {
-                return _interceptor.Value;
-            }
+            for (var i = index; i < index + count; i++)
+                intercepted.Add(new ConsoleCharacter(buffer[i]));
         }
+    }
 
-        /// <summary>
-        /// Attaches the interceptor to the Console so that it starts intercepting output
-        /// </summary>
-        public void Attach()
+    /// <summary>
+    ///     Intercepts the Write event
+    /// </summary>
+    /// <param name="value">the char to write</param>
+    public override void Write(char value)
+    {
+        lock (lockObject)
         {
-            IsInitialized = true;
-            Console.SetOut(this);
+            intercepted.Add(new ConsoleCharacter(value));
         }
+    }
 
-        /// <summary>
-        /// Detaches the interceptor.  Console output will be written as normal.
-        /// </summary>
-        public void Detatch()
+    /// <summary>
+    ///     Intercepts the Write event
+    /// </summary>
+    /// <param name="value">the string to write</param>
+    public override void Write(string? value)
+    {
+        if (value == null)
+            return;
+
+        lock (lockObject)
         {
-            StreamWriter standardOutput = new StreamWriter(Console.OpenStandardOutput());
-            standardOutput.AutoFlush = true;
-            Console.SetOut(standardOutput);
-            IsInitialized = false;
+            intercepted.AddRange(value.Select(c => new ConsoleCharacter(c)).ToArray());
         }
+    }
 
-        private ConsoleOutInterceptor() { }
-
-
-        List<ConsoleCharacter> intercepted = new List<ConsoleCharacter>();
-        
-        /// <summary>
-        /// Intercepts the Write event
-        /// </summary>
-        /// <param name="buffer">the string buffer</param>
-        /// <param name="index">the start index</param>
-        /// <param name="count">number of chars to write</param>
-        public override void Write(char[] buffer, int index, int count)
+    /// <summary>
+    ///     Pretends to intercept a ConsoleString
+    /// </summary>
+    /// <param name="value">the string to intercept</param>
+    public void Write(ConsoleString value)
+    {
+        lock (lockObject)
         {
-            lock (intercepted)
-            {
-                for (int i = index; i < index + count; i++)
-                {
-                    intercepted.Add(new ConsoleCharacter(buffer[i]));
-                }
-            }
+            intercepted.AddRange(value.ToArray());
         }
+    }
 
-        /// <summary>
-        /// Intercepts the Write event
-        /// </summary>
-        /// <param name="value">the char to write</param>
-        public override void Write(char value)
+    /// <summary>
+    ///     Reads the queued up intercepted characters and then clears the queue as an atomic operation.
+    ///     This method is thread safe.
+    /// </summary>
+    /// <returns>The queued up intercepted characters</returns>
+    public Queue<ConsoleCharacter> ReadAndClear()
+    {
+        lock (lockObject)
         {
-            lock (intercepted)
-            {
-                intercepted.Add(new ConsoleCharacter(value));
-            }
-        }
-
-        /// <summary>
-        /// Intercepts the Write event
-        /// </summary>
-        /// <param name="value">the string to write</param>
-        public override void Write(string value)
-        {
-            lock (intercepted)
-            {
-                foreach (var c in value)
-                {
-                    intercepted.Add(new ConsoleCharacter(c));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Pretends to intercept a ConsoleString
-        /// </summary>
-        /// <param name="value">the string to intercept</param>
-        public void Write(ConsoleString value)
-        {
-            lock (intercepted)
-            {
-                foreach (var c in value)
-                {
-                    intercepted.Add(c);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Reads the queued up intercepted characters and then clears the queue as an atomic operation.
-        /// This method is thread safe.
-        /// </summary>
-        /// <returns>The queued up intercepted characters</returns>
-        public Queue<ConsoleCharacter> ReadAndClear()
-        {
-            lock (intercepted)
-            {
-                var ret = new Queue<ConsoleCharacter>(intercepted);
-                intercepted.Clear();
-                return ret;
-            }
-        }
-
-        /// <summary>
-        /// Returns System.Text.Encoding.Default
-        /// </summary>
-        public override System.Text.Encoding Encoding
-        {
-            get { return System.Text.Encoding.Default; }
+            var ret = new Queue<ConsoleCharacter>(intercepted);
+            intercepted.Clear();
+            return ret;
         }
     }
 }

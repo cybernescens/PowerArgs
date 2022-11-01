@@ -250,7 +250,7 @@ namespace PowerArgs
             }
         }
 
-        private void AddToHistory(string item)
+        private void AddToHistory(string? item)
         {
             if (HistoryToSave == 0) return;
 
@@ -259,7 +259,7 @@ namespace PowerArgs
                 File.WriteAllLines(HistoryFileNameInternal, new string[0]);
             }
 
-            List<string> history = File.ReadAllLines(HistoryFileNameInternal).ToList();
+            List<string?> history = File.ReadAllLines(HistoryFileNameInternal).ToList();
             history.Insert(0, item);
             history = history.Distinct().ToList();
             while (history.Count > HistoryToSave) history.RemoveAt(history.Count - 1);
@@ -282,7 +282,7 @@ namespace PowerArgs
             }
             else
             {
-                var lines = File.ReadAllLines(HistoryFileNameInternal).ToList();
+                List<string?> lines = File.ReadAllLines(HistoryFileNameInternal).ToList();
                 List<ConsoleString> ret = new List<ConsoleString>();
                 foreach(var line in lines)
                 {

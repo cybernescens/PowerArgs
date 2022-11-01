@@ -219,16 +219,16 @@ public static class IColliderEx
     public static float OverlapPercentage(this ICollider c, ICollider other) => c.Bounds.OverlapPercentage(other.Bounds);
 
     public static bool Touches(this ICollider c, RectF other) => c.Bounds.Touches(other);
-    public static bool Touches(this ICollider c, ICollider other) => c.Bounds.Touches(other.Bounds);
+    public static bool Touches(this ICollider? c, ICollider? other) => c.Bounds.Touches(other.Bounds);
 
     public static bool Contains(this ICollider c, RectF other) => c.Bounds.Contains(other);
     public static bool Contains(this ICollider c, ICollider other) => c.Bounds.Contains(other.Bounds);
 
-    public static float Top(this ICollider c) => c.Bounds.Top;
-    public static float Left(this ICollider c) => c.Bounds.Left;
+    public static float Top(this ICollider? c) => c.Bounds.Top;
+    public static float Left(this ICollider? c) => c.Bounds.Left;
 
     public static float Bottom(this ICollider c) => c.Bounds.Bottom;
-    public static float Right(this ICollider c) => c.Bounds.Right;
+    public static float Right(this ICollider? c) => c.Bounds.Right;
 
     public static float Width(this ICollider c) => c.Bounds.Width;
     public static float Height(this ICollider c) => c.Bounds.Height;
@@ -263,6 +263,7 @@ public class ColliderBox : ICollider
     public int ZIndex { get; }
     public RectF Bounds{ get; set; }
     public RectF MassBounds { get; private set; }
+
     public ColliderBox(RectF f)
     {
         Bounds = f;
@@ -302,16 +303,14 @@ public readonly struct RectF
 
     public ICollider Box() => new ColliderBox(this);
 
-    public RectF(float x, float y, float w, float h)
+    public RectF(float x = 0f, float y = 0f, float w = 0f, float h = 0f)
     {
         this.Left = x;
         this.Top = y;
         this.Width = w;
         this.Height = h;
     }
-
-
-
+    
     public override string ToString() => $"{Left},{Top} {Width}x{Height}";
     public bool Equals(in RectF other) => Left == other.Left && Top == other.Top && Width == other.Width && Height == other.Height;
     public override bool Equals([NotNullWhen(true)] object? obj) => obj is RectF && Equals((RectF)obj);
@@ -338,7 +337,6 @@ public readonly struct RectF
 
     public RectF Round() => new RectF(ConsoleMath.Round(Left), ConsoleMath.Round(Top), ConsoleMath.Round(Width), ConsoleMath.Round(Height));
 
-
     public RectF Grow(float percentage)
     {
         var center = Center;
@@ -358,7 +356,6 @@ public readonly struct RectF
     public Angle CalculateAngleTo(ICollider other) => CalculateAngleTo(Left, Top, Width, Height, other.Left(), other.Top(), other.Width(), other.Height());
     public Angle CalculateAngleTo(in RectF other) => CalculateAngleTo(this, other);
     public Angle CalculateAngleTo(float bx, float by, float bw, float bh) => CalculateAngleTo(Left, Top, Width, Height, bx, by, bw, bh);
-
 
     public float CalculateDistanceTo(ICollider other) => CalculateDistanceTo(Left, Top, Width, Height, other.Left(), other.Top(), other.Width(), other.Height());
     public float CalculateDistanceTo(in RectF other) => CalculateDistanceTo(this, other);
@@ -489,6 +486,7 @@ public readonly struct RectF
         var otherBottom = y2 + h2;
         var a = Math.Max(0, Math.Min(rectangleRight, otherRight) - Math.Max(x1, x2));
         if (a == 0) return 0;
+
         var b = Math.Max(0, Math.Min(rectangleBottom, otherBottom) - Math.Max(y1, y2));
         return a * b;
     }
@@ -798,9 +796,8 @@ public static class ConsoleMath
     public static float NormalizeQuantity(this int quantity, Angle angle, bool reverse = false) => NormalizeQuantity((float)quantity, angle, reverse);
     public static float Round(float f, int digits) => (float)Math.Round(f, digits, MidpointRounding.AwayFromZero);
     public static float Round(double d, int digits) => (float)Math.Round(d, digits, MidpointRounding.AwayFromZero);
-    public static int Round(float f) => (int)Math.Round(f, MidpointRounding.AwayFromZero);
-    public static int Round(double d) => (int)Math.Round(d, MidpointRounding.AwayFromZero);
-
+    public static int Round(float f) => Convert.ToInt32(Math.Round(f, MidpointRounding.AwayFromZero));
+    public static int Round(double d) => Convert.ToInt32(Math.Round(d, MidpointRounding.AwayFromZero));
 
     /// <summary>
     /// In most consoles the recrtangles allocated to characters are about twice as tall as they

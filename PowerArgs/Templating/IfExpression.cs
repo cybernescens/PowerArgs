@@ -33,7 +33,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">The data context to use when evaluating the conditional expression</param>
         /// <returns>The rendered body if the conditional was true, an empty string otherwise</returns>
-        public virtual ConsoleString Evaluate(DocumentRendererContext context)
+        public virtual ConsoleString? Evaluate(DocumentRendererContext context)
         {
             var eval = context.EvaluateExpression(this.IfExpressionToken.Value);
             if(true.Equals(eval) || 1.Equals(eval))
@@ -64,7 +64,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">The data context to use when evaluating the conditional expression</param>
         /// <returns>The rendered body if the conditional was false, an empty string otherwise</returns>
-        public override ConsoleString Evaluate(DocumentRendererContext context)
+        public override ConsoleString? Evaluate(DocumentRendererContext context)
         {
             var eval = context.EvaluateExpression(this.IfExpressionToken.Value);
             if (false.Equals(eval) == true || 0.Equals(eval))

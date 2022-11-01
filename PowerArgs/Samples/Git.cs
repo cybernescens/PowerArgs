@@ -54,10 +54,9 @@ namespace PowerArgs.Samples
               
             }
 
-            protected override System.Collections.Generic.List<ContextAssistSearchResult> GetResults(string searchString)
+            protected override System.Collections.Generic.List<ContextAssistSearchResult> GetResults(string? searchString)
             {
-                var allRemotes = new List<string>
-                {
+                var allRemotes = new List<string?> {
                     "origin",
                     "upstream",
                     "dev",
@@ -76,7 +75,7 @@ namespace PowerArgs.Samples
                 get { return false; }
             }
 
-            protected override System.Threading.Tasks.Task<List<ContextAssistSearchResult>> GetResultsAsync(string searchString)
+            protected override System.Threading.Tasks.Task<List<ContextAssistSearchResult>> GetResultsAsync(string? searchString)
             {
                 throw new NotImplementedException();
             }

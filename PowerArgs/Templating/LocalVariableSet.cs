@@ -24,7 +24,7 @@ namespace PowerArgs
     /// </summary>
     public class LocalVariableSet
     {
-        private Dictionary<string, object> localVariables;
+        private Dictionary<string?, object> localVariables;
 
         private Stack<ConsoleColorStackElement> consoleStack;
 
@@ -34,7 +34,7 @@ namespace PowerArgs
         /// </summary>
         public LocalVariableSet()
         {
-            this.localVariables = new Dictionary<string, object>();
+            this.localVariables = new Dictionary<string?, object>();
             consoleStack = new Stack<ConsoleColorStackElement>();
         }
 
@@ -152,7 +152,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="variableName">The name of the variable</param>
         /// <param name="value">The value of the variable</param>
-        public void Force(string variableName, object value)
+        public void Force(string? variableName, object value)
         {
             if (localVariables.ContainsKey(variableName))
             {
@@ -180,7 +180,7 @@ namespace PowerArgs
         /// Tries to remove a variable, and does not throw if the variable is not defined.
         /// </summary>
         /// <param name="variableName">The name of the variable to clear</param>
-        public void ForceClear(string variableName)
+        public void ForceClear(string? variableName)
         {
             localVariables.Remove(variableName);
         }
@@ -190,7 +190,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="variableName">The name to check</param>
         /// <returns>True if the variable is defined, false otherwise</returns>
-        public bool IsDefined(string variableName)
+        public bool IsDefined(string? variableName)
         {
             return localVariables.ContainsKey(variableName);
         }
@@ -200,7 +200,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="variableName">the name of the variable to lookup</param>
         /// <returns></returns>
-        public object this[string variableName]
+        public object this[string? variableName]
         {
             get
             {
@@ -221,7 +221,7 @@ namespace PowerArgs
         /// <param name="result">The local variable that is set if a local variable was matched</param>
         /// <param name="restOfExpression">The rest of the expression that came after the local variable identifier</param>
         /// <returns>True if a local variable was parsed, false otherwise</returns>
-        public bool TryParseLocalVariable(string expression, out object result, out string restOfExpression)
+        public bool TryParseLocalVariable(string? expression, out object result, out string? restOfExpression)
         {
             var rootVariableIdentifier = "";
             restOfExpression = null;

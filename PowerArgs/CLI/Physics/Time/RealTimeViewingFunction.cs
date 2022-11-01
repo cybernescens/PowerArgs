@@ -17,7 +17,7 @@ namespace PowerArgs.Cli.Physics
         public Event<RealTimeState> RealTimeStateChanged => rtStateMachine.StateChanged;
 
         public RollingAverage SleepTimeWindow { get; private set; } = new RollingAverage(20);
-        public ConsoleString SleepSummary
+        public ConsoleString? SleepSummary
         {
             get
             {
@@ -64,7 +64,7 @@ namespace PowerArgs.Cli.Physics
  
         private DateTime wallClockSample;
         private TimeSpan simulationTimeSample;
-        private Time t;
+        private Time? t;
         private Lifetime impl;
 
         private Queue<TaskCompletionSource<bool>> invokeSoonQueue = new Queue<TaskCompletionSource<bool>>();
@@ -77,7 +77,7 @@ namespace PowerArgs.Cli.Physics
         /// behind the system wall clock by more than this amound (defaults to 100 ms)</param>
         /// <param name="fallBehindCooldownPeriod">When in the behind state the time simulation must surpass the FallBehindThreshold
         /// by this amount before moving out of the behind state. This is a debouncing mechanism.</param>
-        public RealTimeViewingFunction(Time t, TimeSpan? fallBehindThreshold = null, TimeSpan? fallBehindCooldownPeriod = null)
+        public RealTimeViewingFunction(Time? t, TimeSpan? fallBehindThreshold = null, TimeSpan? fallBehindCooldownPeriod = null)
         {
             this.t = t;
 

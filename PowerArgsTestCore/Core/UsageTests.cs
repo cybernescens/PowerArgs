@@ -45,7 +45,7 @@ namespace ArgsTests
     {
         public class MyUsageProvider : IUsageTemplateProvider
         {
-            public string GetTemplate()
+            public string? GetTemplate()
             {
                 return "Hello";
             }

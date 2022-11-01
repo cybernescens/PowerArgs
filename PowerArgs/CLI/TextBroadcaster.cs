@@ -13,7 +13,7 @@ namespace PowerArgs.Cli
             TextReady.Fire(new ConsoleString(value+"", Console.ForegroundColor, Console.BackgroundColor));
         }
 
-        public override void Write(string value)
+        public override void Write(string? value)
         {
             if (value.Length == 0) return;
             value = value == "\r\n" ? "\n" : value;

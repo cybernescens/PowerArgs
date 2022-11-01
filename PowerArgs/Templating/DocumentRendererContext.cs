@@ -40,7 +40,7 @@ namespace PowerArgs
         /// <param name="dynamicTemplate">The template to render</param>
         /// <param name="nestedToken">The token in the original document that resulted in dynamic rendering</param>
         /// <returns>The rendered content</returns>
-        public ConsoleString RenderDynamicContent(string dynamicTemplate, DocumentToken nestedToken)
+        public ConsoleString? RenderDynamicContent(string? dynamicTemplate, DocumentToken nestedToken)
         {
             return this.DocumentRenderer.Render(dynamicTemplate, this, "dynamic evaluation sourced from '" + nestedToken.Position + "'");
         }
@@ -50,7 +50,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="body">The tokens to render</param>
         /// <returns>the rendered content</returns>
-        public ConsoleString RenderBody(IEnumerable<DocumentToken> body)
+        public ConsoleString? RenderBody(IEnumerable<DocumentToken> body)
         {
             return DocumentRenderer.Render(body, this);
         }
@@ -62,10 +62,10 @@ namespace PowerArgs
         /// </summary>
         /// <param name="expressionText">The expression text</param>
         /// <returns>The resolved value as a .NET object</returns>
-        public object EvaluateExpression(string expressionText)
+        public object EvaluateExpression(string? expressionText)
         {
             object localVariableValue;
-            string restOfExpressionText;
+            string? restOfExpressionText;
 
             ObjectPathExpression expression;
             object root;

@@ -282,7 +282,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestMissingActionBinding()
         {
-            var args = new string[] { "someaction", "aval", "bval" };
+            var args = new string?[] { "someaction", "aval", "bval" };
 
             try
             {
@@ -298,7 +298,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestActionHasNoParameters()
         {
-            var args = new string[] { "someaction", "aval", "bval" };
+            var args = new string?[] { "someaction", "aval", "bval" };
 
             try
             {
@@ -314,7 +314,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestActionHasWrongParameterType()
         {
-            var args = new string[] { "someaction", "aval", "bval" };
+            var args = new string?[] { "someaction", "aval", "bval" };
 
             try
             {
@@ -330,7 +330,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestActionHasTooManyParameters()
         {
-            var args = new string[] { "someaction", "aval", "bval" };
+            var args = new string?[] { "someaction", "aval", "bval" };
 
             try
             {

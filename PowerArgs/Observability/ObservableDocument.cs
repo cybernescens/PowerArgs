@@ -22,10 +22,10 @@ namespace PowerArgs
         {
             private object target;
             private PropertyInfo property;
-            private object previousValue;
+            private object? previousValue;
             private object newValue;
 
-            public PropertyAssignmentAction(object target, PropertyInfo property, object previousValue)
+            public PropertyAssignmentAction(object target, PropertyInfo property, object? previousValue)
             {
                 this.target = target;
                 this.property = property;
@@ -43,10 +43,10 @@ namespace PowerArgs
         private class AddToCollectionAction : IUndoRedoAction
         {
             private IObservableCollection target;
-            private object added;
+            private object? added;
             private int index;
 
-            public AddToCollectionAction(IObservableCollection target, object added, int index)
+            public AddToCollectionAction(IObservableCollection target, object? added, int index)
             {
                 this.target = target;
                 this.added = added;
@@ -63,10 +63,10 @@ namespace PowerArgs
         private class RemovedFromCollectionAction : IUndoRedoAction
         {
             private IObservableCollection target;
-            private object removed;
+            private object? removed;
             private int index;
 
-            public RemovedFromCollectionAction(IObservableCollection target, object removed, int index)
+            public RemovedFromCollectionAction(IObservableCollection target, object? removed, int index)
             {
                 this.target = target;
                 this.removed = removed;
@@ -144,7 +144,7 @@ namespace PowerArgs
 
         private IObservableObject root;
 
-        private ObservableCollection<TrackedObservable> trackedObservables = new ObservableCollection<TrackedObservable>();
+        private ObservableCollection<TrackedObservable?> trackedObservables = new ObservableCollection<TrackedObservable?>();
 
         private UndoRedoStack undoRedoStack = new UndoRedoStack();
 
@@ -156,7 +156,7 @@ namespace PowerArgs
         public ObservableDocument(IObservableObject root)
         {
             Watch(root);
-            this.Changed.SubscribeForLifetime(() => undoRedoPending = false, this);
+            this.Changed.SubscribeForLifetime(this, () => undoRedoPending = false);
             this.OnDisposed(()=>
             {
                 trackedObservables.Clear();
@@ -197,7 +197,7 @@ namespace PowerArgs
                         {
                             undoRedoStack.Do(new PropertyAssignmentAction(obj, myProp, obj.GetPrevious(myProp.Name)));
                         }
-                       Changed.Fire();
+                        Changed.Fire();
                     }
                 }, trackingLifetime);
             }
@@ -209,38 +209,40 @@ namespace PowerArgs
                     .WhereAs<IObservableObject>()
                     .ForEach(child => Watch(child as IObservableObject, path + "[" + Guid.NewGuid() + "]"));
        
-                collection.Added.SubscribeForLifetime((o) =>
-                {
-                    if (undoRedoPending == false)
+                collection.Added.SubscribeForLifetime(trackingLifetime,
+                    (o) =>
                     {
-                        undoRedoStack.Do(new AddToCollectionAction(collection, o, collection.LastModifiedIndex));
-                    }
-
-                    if (o is IObservableObject)
-                    {
-                        Watch(o as IObservableObject, path + "[" + Guid.NewGuid() + "]");
-                    }
-                    Changed.Fire();
-                }, trackingLifetime);
-
-                collection.Removed.SubscribeForLifetime((o) =>
-                {
-                    if (undoRedoPending == false)
-                    {
-                        undoRedoStack.Do(new RemovedFromCollectionAction(collection, o, collection.LastModifiedIndex));
-                    }
-                    if (o is IObservableObject)
-                    {
-                        var tracked = trackedObservables.Where(to => to.PropertyValue == o).Single();
-                        foreach (var related in trackedObservables.Where(t => t.Path.StartsWith(tracked.Path)).ToList())
+                        if (undoRedoPending == false)
                         {
-                            trackedObservables.Remove(related);
+                            undoRedoStack.Do(new AddToCollectionAction(collection, o, collection.LastModifiedIndex));
                         }
-                    }
-                    Changed.Fire();
-                }, trackingLifetime);
 
-                collection.AssignedToIndex.SubscribeForLifetime((args) => throw new NotSupportedException("Index assignments are not supported by observable documents"), trackingLifetime);
+                        if (o is IObservableObject)
+                        {
+                            Watch(o as IObservableObject, path + "[" + Guid.NewGuid() + "]");
+                        }
+                        Changed.Fire();
+                    });
+
+                collection.Removed.SubscribeForLifetime(trackingLifetime,
+                    (o) =>
+                    {
+                        if (undoRedoPending == false)
+                        {
+                            undoRedoStack.Do(new RemovedFromCollectionAction(collection, o, collection.LastModifiedIndex));
+                        }
+                        if (o is IObservableObject)
+                        {
+                            var tracked = trackedObservables.Where(to => to.PropertyValue == o).Single();
+                            foreach (var related in trackedObservables.Where(t => t.Path.StartsWith(tracked.Path)).ToList())
+                            {
+                                trackedObservables.Remove(related);
+                            }
+                        }
+                        Changed.Fire();
+                    });
+
+                collection.AssignedToIndex.SubscribeForLifetime(trackingLifetime, (object[] _) => throw new NotSupportedException("Index assignments are not supported by observable documents"));
             }
         }
     }

@@ -17,7 +17,7 @@ namespace ArgsTests.CLI.Controls
             app.SecondsBetweenKeyframes = .05f;
             app.InvokeNextCycle(async () =>
             {
-                var fixedPanel = app.LayoutRoot.Add(new FixedAspectRatioPanel(2, new ConsolePanel() { Background = RGB.Green })).CenterBoth();
+                FixedAspectRatioPanel? fixedPanel = app.LayoutRoot.Add(new FixedAspectRatioPanel(2, new ConsolePanel() { Background = RGB.Green })).CenterBoth();
                 app.LayoutRoot.Background = RGB.DarkYellow;
                 fixedPanel.Background = RGB.Red;
                 fixedPanel.Width = app.LayoutRoot.Width;

@@ -6,7 +6,14 @@ namespace PowerArgs.Cli
 {
     public class FramerateControl : StackPanel
     {
-        private Label renderFPSLabel, paintFPSLabel, nowControl, sleepTimeLabel,zeroSpinsLabel, nonZeroSpinsLabel, elementsControl, functionsControl;
+        private Label? renderFPSLabel;
+        private Label? paintFPSLabel;
+        private Label? nowControl;
+        private Label? sleepTimeLabel;
+        private Label? zeroSpinsLabel;
+        private Label? nonZeroSpinsLabel;
+        private Label? elementsControl;
+        private Label? functionsControl;
         private SpaceTimePanel scene;
         public FramerateControl(SpaceTimePanel scene)
         {
@@ -20,7 +27,7 @@ namespace PowerArgs.Cli
             sleepTimeLabel = Add(new Label() { Text = "".ToConsoleString() }).FillHorizontally();
             zeroSpinsLabel = Add(new Label() { Text = "".ToConsoleString() }).FillHorizontally();
             nonZeroSpinsLabel = Add(new Label() { Text = "".ToConsoleString() }).FillHorizontally();
-            AddedToVisualTree.SubscribeForLifetime(SetupPolling, this);
+            AddedToVisualTree.SubscribeForLifetime(this, SetupPolling);
         }
 
         private void SetupPolling()
@@ -55,7 +62,7 @@ namespace PowerArgs.Cli
         }
 
  
-        private ConsoleString FormatFramerateMessage(string message, int framerate, bool style)
+        private ConsoleString? FormatFramerateMessage(string message, int framerate, bool style)
         {
             if(!style)
             {

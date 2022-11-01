@@ -42,7 +42,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="searchString">the search string</param>
         /// <returns>all options that contain the given search string, ignoring case</returns>
-        protected override List<ContextAssistSearchResult> GetResults(string searchString)
+        protected override List<ContextAssistSearchResult> GetResults(string? searchString)
         {
             return Options
                     .Where(o => o.DisplayText.IndexOf(searchString, StringComparison.InvariantCultureIgnoreCase) >= 0)
@@ -55,7 +55,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="searchString">Not implemented</param>
         /// <returns>Not implemented</returns>
-        protected override System.Threading.Tasks.Task<List<ContextAssistSearchResult>> GetResultsAsync(string searchString)
+        protected override System.Threading.Tasks.Task<List<ContextAssistSearchResult>> GetResultsAsync(string? searchString)
         {
             throw new NotImplementedException();
         }

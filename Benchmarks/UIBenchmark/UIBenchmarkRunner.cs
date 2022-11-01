@@ -14,14 +14,14 @@ public class UIBenchmarkRunner
             GC.Collect(2, GCCollectionMode.Forced);
         }
 
-        var headers = new List<ConsoleString>()
+        var headers = new List<ConsoleString?>()
         {
             "Test".ToYellow(),
             "Work Done".ToYellow(),
             "Speedup".ToYellow(),
         };
 
-        var output = new ConsoleTableBuilder().FormatAsTable(headers, results.Select(r => new List<ConsoleString>()
+        var output = new ConsoleTableBuilder().FormatAsTable(headers, results.Select(r => new List<ConsoleString?>()
         {
             r.Test.ToString().ToWhite(),
             r.Temp.WorkDone.ToString("N0").ToWhite(), 

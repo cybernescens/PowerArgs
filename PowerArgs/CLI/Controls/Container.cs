@@ -1,173 +1,181 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.Toolkit.HighPerformance;
 
-namespace PowerArgs.Cli
+namespace PowerArgs.Cli;
+
+public abstract class Container : ConsoleControl
 {
-    public abstract class Container : ConsoleControl
+    internal Container() : this(1, 1) { }
+
+    internal Container(int w, int h) : base(w, h) { }
+
+    public abstract IEnumerable<ConsoleControl> Children { get; }
+
+    public IEnumerable<ConsoleControl> Descendents
     {
-        internal Container(): this(1,1) { }
-
-        internal Container(int w, int h) : base(w,h) { }
-        public abstract IEnumerable<ConsoleControl> Children { get; }
-
-        public IEnumerable<ConsoleControl> Descendents
-        {
-            get
-            {
-                List<ConsoleControl> descendends = new List<ConsoleControl>();
-                VisitControlTree((d) =>
-                {
-                    descendends.Add(d);
+        get {
+            var descendents = new List<ConsoleControl>();
+            VisitControlTree(
+                d => {
+                    descendents.Add(d);
                     return false;
                 });
 
-                return descendends.AsReadOnly();
-            }
+            return descendents.AsReadOnly();
         }
+    }
 
-        /// <summary>
-        /// Visits every control in the control tree, recursively, using the visit action provided
-        /// </summary>
-        /// <param name="visitAction">the visitor function that will be run for each child control, the function can return true if it wants to stop further visitation</param>
-        /// <param name="root">set to null, used for recursion</param>
-        /// <returns>true if the visitation was short ciruited by a visitor, false otherwise</returns>
-        public bool VisitControlTree(Func<ConsoleControl, bool> visitAction, Container root = null)
+    /// <summary>
+    ///     Visits every control in the control tree, recursively, using the visit action provided
+    /// </summary>
+    /// <param name="visitAction">
+    ///     the visitor function that will be run for each child control, the function can return true if
+    ///     it wants to stop further visitation
+    /// </param>
+    /// <param name="root">set to null, used for recursion</param>
+    /// <returns>true if the visitation was short circuited by a visitor, false otherwise</returns>
+    public bool VisitControlTree(Func<ConsoleControl, bool> visitAction, Container? root = null)
+    {
+        root ??= this;
+
+        foreach (var child in root.Children)
         {
-            bool shortCircuit = false;
-            root = root ?? this;
+            var shortCircuit = visitAction(child);
+            if (shortCircuit) return true;
 
-            foreach (var child in root.Children)
+            if (child is Container cc)
             {
-                shortCircuit = visitAction(child);
+                shortCircuit = VisitControlTree(visitAction, cc);
                 if (shortCircuit) return true;
-
-                if (child is Container)
-                {
-                    shortCircuit = VisitControlTree(visitAction, child as Container);
-                    if (shortCircuit) return true;
-                }
-            }
-
-            return false;
-        }
-
-        protected void Compose(ConsoleControl control)
-        {
-            if (control.IsVisible == false) return;
-            control.Paint();
-
-            foreach(var filter in control.RenderFilters)
-            {
-                filter.Control = control;
-                filter.Filter(control.Bitmap);
-            }
-
-            if (control.CompositionMode == CompositionMode.PaintOver)
-            {
-                ComposePaintOver(control);
-            }
-            else if(control.CompositionMode == CompositionMode.BlendBackground)
-            {
-                ComposeBlendBackground(control);
-            }
-            else 
-            {
-                ComposeBlendVisible(control);
-            }
-
-        }
-
-        protected virtual (int X, int Y) Transform(ConsoleControl c) => (c.X, c.Y);
-
-        private void ComposePaintOver(ConsoleControl control)
-        {
-            var position = Transform(control);
-
-            var minX = Math.Max(position.X, 0);
-            var minY = Math.Max(position.Y, 0);
-            var maxX = Math.Min(Width, position.X + control.Width);
-            var maxY = Math.Min(Height, position.Y + control.Height);
-
-            var myPixX = Bitmap.Pixels.AsSpan();
-            for (var x = minX; x < maxX; x++)
-            {
-                var myPixY = myPixX[x].AsSpan();
-                for (var y = minY; y < maxY; y++)
-                {
-                    myPixY[y] = control.Bitmap.Pixels[x - position.X][y - position.Y];
-                }
             }
         }
 
-        private void ComposeBlendBackground (ConsoleControl control)
-        {
-            var position = Transform(control);
-            var minX = Math.Max(position.X, 0);
-            var minY = Math.Max(position.Y, 0);
-            var maxX = Math.Min(Width, position.X + control.Width);
-            var maxY = Math.Min(Height, position.Y + control.Height);
-            for (var x = minX; x < maxX; x++)
-            {
-                for (var y = minY; y < maxY; y++)
-                {
-                    var controlPixel = control.Bitmap.Pixels[x - position.X][y - position.Y];
+        return false;
+    }
 
-                    if (controlPixel.BackgroundColor != ConsoleString.DefaultBackgroundColor)
-                    {
-                        Bitmap.Pixels[x][y] = controlPixel;
-                    }
-                    else
-                    {
-                        var myPixel = Bitmap.Pixels[x][y];
-                        if (myPixel.BackgroundColor != ConsoleString.DefaultBackgroundColor)
-                        {
-                            var composedValue = new ConsoleCharacter(controlPixel.Value, controlPixel.ForegroundColor, myPixel.BackgroundColor);
-                            Bitmap.Pixels[x][y] = composedValue;
-                        }
-                        else
-                        {
-                            Bitmap.Pixels[x][y] = controlPixel;
-                        }
-                    }
-                }
-            }
+    protected void Compose(ConsoleControl control)
+    {
+        if (control.IsVisible == false) return;
+
+        control.Paint();
+
+        foreach (var filter in control.RenderFilters)
+        {
+            filter.Control = control;
+            filter.Filter(control.Bitmap);
         }
 
-        private bool IsVisibleOnMyPanel(in ConsoleCharacter pixel)
+        if (control.CompositionMode == CompositionMode.PaintOver)
         {
-            var c = pixel.Value;
+            ComposePaintOver(control);
+            return;
+        }
 
-            if(c == ' ')
+        if (control.CompositionMode == CompositionMode.BlendBackground)
+        {
+            ComposeBlendBackground(control);
+            return;
+        }
+
+        if (control.CompositionMode == CompositionMode.BlendVisible)
+        {
+            ComposeBlendVisible(control);
+            return;
+        }
+
+        throw new InvalidOperationException($"unknown composition mode: {control.CompositionMode}");
+    }
+
+    protected virtual (int X, int Y) Transform(ConsoleControl c) => (c.X, c.Y);
+
+    private void ComposePaintOver(ConsoleControl control)
+    {
+        var position = Transform(control);
+
+        var minX = Math.Max(position.X, 0);
+        var minY = Math.Max(position.Y, 0);
+        var maxX = Math.Min(Width, position.X + control.Width);
+        var maxY = Math.Min(Height, position.Y + control.Height);
+
+        var pixels = Bitmap.Pixels.AsSpan2D();
+
+        /* may not be right */
+
+        for (var i = minY * minX + minX; i < maxX * maxY; i++)
+        {
+            var x = i % maxX;
+            var y = i / maxX;
+            pixels[x, y] = control.Bitmap.Pixels[x - position.X, y - position.Y];
+        }
+    }
+
+    private void ComposeBlendBackground(ConsoleControl control)
+    {
+        var position = Transform(control);
+        var minX = Math.Max(position.X, 0);
+        var minY = Math.Max(position.Y, 0);
+        var maxX = Math.Min(Width, position.X + control.Width);
+        var maxY = Math.Min(Height, position.Y + control.Height);
+
+        var pixels = Bitmap.Pixels.AsSpan2D();
+
+        for (var i = minY * minX + minX; i < maxX * maxY; i++)
+        {
+            var x = i % maxX;
+            var y = i / maxX;
+
+            var controlPixel = control.Bitmap.Pixels[x - position.X, y - position.Y];
+
+            if (controlPixel.BackgroundColor != ConsoleString.DefaultBackgroundColor)
             {
-                return pixel.BackgroundColor != Background;
+                pixels[x, y] = controlPixel;
+                continue;
+            }
+
+            var myPixel = Bitmap.Pixels[x, y];
+
+            if (myPixel.BackgroundColor != ConsoleString.DefaultBackgroundColor)
+            {
+                var composedValue = new ConsoleCharacter(
+                    controlPixel.Value,
+                    controlPixel.ForegroundColor,
+                    myPixel.BackgroundColor);
+
+                pixels[x, y] = composedValue;
             }
             else
             {
-                return pixel.ForegroundColor != Background || pixel.BackgroundColor != Background;
+                pixels[x, y] = controlPixel;
             }
         }
+    }
 
-        private void ComposeBlendVisible(ConsoleControl control)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool ControlPixelCanBenRendered(in ConsoleCharacter pixel) =>
+        pixel.Value == ' '
+            ? pixel.BackgroundColor != Background
+            : pixel.ForegroundColor != Background || pixel.BackgroundColor != Background;
+
+    private void ComposeBlendVisible(ConsoleControl control)
+    {
+        var position = Transform(control);
+        var minX = Math.Max(position.X, 0);
+        var minY = Math.Max(position.Y, 0);
+        var maxX = Math.Min(Width, position.X + control.Width);
+        var maxY = Math.Min(Height, position.Y + control.Height);
+        
+        var pixels = Bitmap.Pixels.AsSpan2D();
+
+        for (var i = minY * minX + minX; i < maxX * maxY; i++)
         {
-            var position = Transform(control);
-            var minX = Math.Max(position.X, 0);
-            var minY = Math.Max(position.Y, 0);
-            var maxX = Math.Min(Width, position.X + control.Width);
-            var maxY = Math.Min(Height, position.Y + control.Height);
-            for (var x = minX; x < maxX; x++)
+            var x = i % maxX;
+            var y = i / maxX;
+
+            var controlPixel = control.Bitmap.Pixels[x - position.X, y - position.Y];
+
+            if (ControlPixelCanBenRendered(controlPixel))
             {
-                for (var y = minY; y < maxY; y++)
-                {
-                    var controlPixel = control.Bitmap.Pixels[x - position.X][ y - position.Y];
-
-                    var controlPixelHasRenderableContent = IsVisibleOnMyPanel(controlPixel);
-
- 
-                    if (controlPixelHasRenderableContent)
-                    {
-                        Bitmap.Pixels[x][y] = controlPixel;
-                    }
-                }
+                pixels[x, y] = controlPixel;
             }
         }
     }

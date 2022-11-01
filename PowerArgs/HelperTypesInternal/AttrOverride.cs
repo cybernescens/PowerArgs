@@ -5,17 +5,17 @@ namespace PowerArgs
 {
     internal class AttrOverride
     {
-        Dictionary<string, object> overrideValues;
+        Dictionary<string, object?> overrideValues;
 
         Type hostingType;
 
         public AttrOverride(Type hostingType)
         {
             this.hostingType = hostingType;
-            overrideValues = new Dictionary<string, object>();
+            overrideValues = new Dictionary<string, object?>();
         }
 
-        internal void Set(string propertyName, object value)
+        internal void Set(string propertyName, object? value)
         {
             if (overrideValues.ContainsKey(propertyName))
             {
@@ -33,7 +33,7 @@ namespace PowerArgs
             bool hasMatchingAttribute = attriibutes.HasMeta<T1>();
 
             object attributeVal = default(T2);
-            object overrideVal = default(T2);
+            object? overrideVal = default(T2);
 
             if (hasOverride)
             {

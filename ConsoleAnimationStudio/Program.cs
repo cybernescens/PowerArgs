@@ -1,9 +1,13 @@
 ﻿using PowerArgs.Cli;
 
-namespace ConsoleAnimationStudio
+namespace ConsoleAnimationStudio;
+
+internal class Program
 {
-    class Program
+    private static void Main(string[] args)
     {
-        static void Main(string[] args) => new ConsoleApp(() => ConsoleApp.Current.LayoutRoot.Add(new ConsoleBitmapAnimationStudio()).Fill()).Run();
+        var app = new ConsoleApp();
+        app.Invoke(() => app.LayoutRoot.Add(new ConsoleBitmapAnimationStudio()).Fill());
+        app.Run();
     }
 }

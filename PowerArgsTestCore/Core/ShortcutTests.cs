@@ -176,7 +176,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestBasicShortcuts()
         {
-            var args = new string[] { "-s", "FirstString", "-o", "SecondString" };
+            var args = new string?[] { "-s", "FirstString", "-o", "SecondString" };
             var parsed = Args.Parse<ShortcutArgs>(args);
 
             Assert.AreEqual("FirstString", parsed.SomeString);
@@ -186,7 +186,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestShortcutsWithAttributes()
         {
-            var args = new string[] { "-s", "FirstString", "-so", "SecondString" };
+            var args = new string?[] { "-s", "FirstString", "-so", "SecondString" };
             var parsed = Args.Parse<ArgShortcutAttributeArgs>(args);
 
             Assert.AreEqual("FirstString", parsed.SomeString);
@@ -197,7 +197,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestNoShortcutsWithAttributes()
         {
-            var args = new string[] { "-s", "FirstString", "-SomeOtherString", "SecondString" };
+            var args = new string?[] { "-s", "FirstString", "-SomeOtherString", "SecondString" };
             var parsed = Args.Parse<ArgShortcutAttributeArgsNoShortcut>(args);
 
             Assert.AreEqual("FirstString", parsed.SomeString);
@@ -208,7 +208,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestIgnoreLeadingDashes()
         {
-            var args = new string[] { "-so", "FirstString", "-o", "SecondString" };
+            var args = new string?[] { "-so", "FirstString", "-o", "SecondString" };
             var parsed = Args.Parse<ShortcutArgsIgnoreLeadingDash>(args);
 
             Assert.AreEqual("FirstString", parsed.SomeString);
@@ -219,7 +219,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestDuplicateArgs()
         {
-            var args = new string[] { };
+            var args = new string?[] { };
             var parsed = Args.Parse<DuplicateShortcutArgs>(args);
             Assert.AreEqual("S", (typeof(DuplicateShortcutArgs).GetShortcut("SomeString")));
             Assert.AreEqual("So", (typeof(DuplicateShortcutArgs).GetShortcut("SomeOtherString")));
@@ -228,7 +228,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestDuplicateArgsEdge()
         {
-            var args = new string[] { };
+            var args = new string?[] { };
             var parsed = Args.Parse<DuplicateShortcutEdgeCaseArgs>(args);
             Assert.AreEqual("ab", (typeof(DuplicateShortcutEdgeCaseArgs).GetShortcut("Abcdefg0")));
             Assert.AreEqual("A", (typeof(DuplicateShortcutEdgeCaseArgs).GetShortcut("Abcdefg1")));
@@ -241,7 +241,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { };
+                var args = new string?[] { };
                 var parsed = Args.Parse<DuplicateShortcutArgs2>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -256,7 +256,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { };
+                var args = new string?[] { };
                 var parsed = Args.Parse<DuplicateShortcutArgs3>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -270,7 +270,7 @@ namespace ArgsTests
         public void TestDuplicateArgsUsingShortcutDifferentCasesAllowed()
         {
 
-            var args = new string[] { "-a", "Additional Info Value", "-A", "Address Value" };
+            var args = new string?[] { "-a", "Additional Info Value", "-A", "Address Value" };
             var parsed = Args.Parse<DuplicateShortcutArgsCaseSensitive>(args);
 
             Assert.AreEqual("Additional Info Value", parsed.AdditionalInfo);
@@ -282,7 +282,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { "-so", "asdasd" };
+                var args = new string?[] { "-so", "asdasd" };
                 var parsed = Args.Parse<ShortcutArgsConflictingArguments>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -295,7 +295,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestMultipleShortcuts()
         {
-            var parsed = Args.Parse<MultipleShortcutArgs>(new string[0]);
+            var parsed = Args.Parse<MultipleShortcutArgs>(new string?[0]);
             Assert.AreEqual(false, parsed.Help);
 
             parsed = Args.Parse<MultipleShortcutArgs>("-h");
@@ -322,7 +322,7 @@ namespace ArgsTests
         {
             try
             {
-                var parsed = Args.Parse<MultipleShortcutDuplicateArgs>(new string[0]);
+                var parsed = Args.Parse<MultipleShortcutDuplicateArgs>(new string?[0]);
                 Assert.Fail("An exception should have been thrown");
             }
             catch (InvalidArgDefinitionException ex)

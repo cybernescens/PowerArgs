@@ -69,7 +69,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestTypeConverter()
         {
-            var parsed = Args.Parse<ConvertArgs>(new string[] { "-t", "3,4" });
+            var parsed = Args.Parse<ConvertArgs>(new string?[] { "-t", "3,4" });
             Assert.AreEqual(3, parsed.ThePoint.X);
             Assert.AreEqual(4, parsed.ThePoint.Y);
         }
@@ -79,7 +79,7 @@ namespace ArgsTests
         {
             Helpers.Run(() =>
             {
-                var parsed = Args.Parse<ConvertArgs>(new string[] { "-t", "3,NOTANUMBER" });
+                var parsed = Args.Parse<ConvertArgs>(new string?[] { "-t", "3,NOTANUMBER" });
             }, 
             Helpers.ExpectedArgException());
         }

@@ -13,7 +13,7 @@ namespace ArgsTests.Templating
             this.impl = impl;
         }
 
-        public ConsoleString Evaluate(DocumentRendererContext context)
+        public ConsoleString? Evaluate(DocumentRendererContext context)
         {
             return impl(context);
         }

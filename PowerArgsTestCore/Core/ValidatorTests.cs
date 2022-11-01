@@ -48,7 +48,7 @@ namespace ArgsTests
         public void TestExistingFileValidatorNegative()
         {
             var invalidFileName = "notarealfile";
-            var args = new string[] { invalidFileName, "C:\\windows" };
+            var args = new string?[] { invalidFileName, "C:\\windows" };
             try
             {
                 var parsed = Args.ParseAction<CopyArgs>(args);
@@ -68,7 +68,7 @@ namespace ArgsTests
         public void TestExistingFolderValidatorNegative()
         {
             var invalidFolderName = "notARealFolder";
-            var args = new string[] { Path.GetTempFileName(), invalidFolderName };
+            var args = new string?[] { Path.GetTempFileName(), invalidFolderName };
             try
             {
                 var parsed = Args.ParseAction<CopyArgs>(args);
@@ -87,7 +87,7 @@ namespace ArgsTests
         [TestMethod]
         public void ArgRequiredValidatorThrowsOnMissingArg()
         {
-            var args = new string[] { };
+            var args = new string?[] { };
 
             try
             {
@@ -106,7 +106,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { Path.GetTempFileName(), "C:\\Windows", "-start", "ABC" };
+                var args = new string?[] { Path.GetTempFileName(), "C:\\Windows", "-start", "ABC" };
                 Args.Parse<CopyArgs>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -122,7 +122,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { Path.GetTempFileName(), "C:\\Windows", "-start", 101 + "" };
+                var args = new string?[] { Path.GetTempFileName(), "C:\\Windows", "-start", 101 + "" };
                 Args.Parse<CopyArgs>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -138,7 +138,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { Path.GetTempFileName(), "C:\\Windows", "-somenumber", 100 + "" };
+                var args = new string?[] { Path.GetTempFileName(), "C:\\Windows", "-somenumber", 100 + "" };
                 Args.Parse<CopyArgs>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -154,7 +154,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestExistingFileAndFolderAndRequiredValidator()
         {
-            var args = new string[] { Path.GetTempFileName(), "C:\\windows" };
+            var args = new string?[] { Path.GetTempFileName(), "C:\\windows" };
             var parsed = Args.ParseAction<CopyArgs>(args);
         }
 
@@ -162,7 +162,7 @@ namespace ArgsTests
         public void TestRangeValidator()
         {
             double start = 0, end = 10;
-            var args = new string[] { Path.GetTempFileName(), "C:\\Windows", "-start", start + "", "-end", end + "" };
+            var args = new string?[] { Path.GetTempFileName(), "C:\\Windows", "-start", start + "", "-end", end + "" };
             var parsed = Args.ParseAction<CopyArgs>(args);
         }
 
@@ -170,7 +170,7 @@ namespace ArgsTests
         public void TestRangeValidatorMaxInclusive()
         {
             var correctValue = 100;
-            var correctArgs = new string[] { Path.GetTempFileName(), "C:\\Windows", "-start", correctValue + "" };
+            var correctArgs = new string?[] { Path.GetTempFileName(), "C:\\Windows", "-start", correctValue + "" };
             var parsedShouldwork = Args.Parse<CopyArgs>(correctArgs);
             Assert.AreEqual(correctValue, parsedShouldwork.Start);
         }
@@ -179,7 +179,7 @@ namespace ArgsTests
         public void TestRangeValidatorMaxExclusive()
         {
             var correctValue = 99;
-            var correctArgs = new string[] { Path.GetTempFileName(), "C:\\Windows", "-somenumber", correctValue + "" };
+            var correctArgs = new string?[] { Path.GetTempFileName(), "C:\\Windows", "-somenumber", correctValue + "" };
             var parsedShouldwork = Args.Parse<CopyArgs>(correctArgs);
             Assert.AreEqual(correctValue, parsedShouldwork.SomeNumber);
         }

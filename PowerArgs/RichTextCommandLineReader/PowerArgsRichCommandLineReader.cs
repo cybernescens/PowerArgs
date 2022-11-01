@@ -105,7 +105,7 @@ namespace PowerArgs
         public bool TryTabComplete(RichCommandLineContext cliContext)
         {
             var powerArgsContext = ConvertContext(this.Definition, cliContext);
-            string completion = null;
+            string? completion = null;
             foreach (var completionSource in newHooks)
             {
                 if (completionSource.TryComplete(powerArgsContext, out completion))
@@ -194,7 +194,7 @@ namespace PowerArgs
         /// <param name="expectMatchingArg">This will be set to true if the current token starts with a '-' or a '/' meaning that the token was an argument indicator, even if it didn't match an argument in the definition.</param>
         /// <param name="def">The definition to inspect.  If null, the ambient definition will be used.  If there is no ambient definition and null is passed then this method throws a NullReferenceException.</param>
         /// <returns>An argument that is matched by the given token or null if there was no match</returns>
-        public static CommandLineArgument FindCurrentTokenArgument(CommandLineAction contextualAction, string currentToken, out bool expectMatchingArg, CommandLineArgumentsDefinition def = null)
+        public static CommandLineArgument FindCurrentTokenArgument(CommandLineAction contextualAction, string? currentToken, out bool expectMatchingArg, CommandLineArgumentsDefinition def = null)
         {            
             def = PassThroughOrTryGetAmbientDefinition(def);
 
@@ -204,7 +204,7 @@ namespace PowerArgs
                 return null;
             }
 
-            string currentTokenArgumentNameValue = null;
+            string? currentTokenArgumentNameValue = null;
             expectMatchingArg = false;
             if (ArgParser.IsDashSpecifiedArgumentIdentifier(currentToken))
             {
@@ -234,18 +234,18 @@ namespace PowerArgs
         {
 
             public int CurrentTokenIndex { get; set; }
-            public string CommandLine { get; set; }
+            public string? CommandLine { get; set; }
             public CommandLineAction ActionContext { get; set; }
             public CommandLineArgumentsDefinition Definition { get; set; }
-            public string PreviousToken { get; set; }
-            public string CurrentToken { get; set; }
+            public string? PreviousToken { get; set; }
+            public string? CurrentToken { get; set; }
         }
     
         public static CommandLineArgument FindContextualArgument(FindContextualArgumentArgs args)
         {
             args.Definition = PassThroughOrTryGetAmbientDefinition(args.Definition);
 
-            string currentTokenArgumentNameValue = null;
+            string? currentTokenArgumentNameValue = null;
             if (args.PreviousToken != null && ArgParser.IsDashSpecifiedArgumentIdentifier(args.PreviousToken))
             {
                 currentTokenArgumentNameValue = args.PreviousToken.Substring(1);
@@ -298,9 +298,9 @@ namespace PowerArgs
         /// <param name="readerContext">the reader context to inspect</param>
         /// <param name="highlighterContext">the highlighter context to inspect</param>
         /// <returns>a non whitespace token that preceeds the current token or null if no such token is found</returns>
-        public static string FindPreviousNonWhitespaceToken(RichCommandLineContext readerContext, HighlighterContext highlighterContext)
+        public static string? FindPreviousNonWhitespaceToken(RichCommandLineContext readerContext, HighlighterContext highlighterContext)
         {
-            string previousToken = null;
+            string? previousToken = null;
 
             for (int i = highlighterContext.CurrentTokenIndex - 1; i >= 0; i--)
             {
@@ -319,7 +319,7 @@ namespace PowerArgs
         /// <param name="firstToken">the token to test.  If you pass null you will get null back.</param>
         /// <param name="def">The definition to inspect.  If null, the ambient definition will be used.  If there is no ambient definition and null is passed then this method throws a NullReferenceException.</param>
         /// <returns>the action that matches the given token in the given definition or null if no such action is found</returns>
-        public static CommandLineAction FindContextualAction(string firstToken, CommandLineArgumentsDefinition def = null)
+        public static CommandLineAction FindContextualAction(string? firstToken, CommandLineArgumentsDefinition def = null)
         {
             def = PassThroughOrTryGetAmbientDefinition(def);
             if(firstToken == null)

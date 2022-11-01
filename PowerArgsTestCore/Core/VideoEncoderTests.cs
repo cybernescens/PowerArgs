@@ -49,11 +49,11 @@ namespace ArgsTests
             [ArgExistingFile]
             [ArgPosition(1)]
             [ArgDescription("The source video file")]
-            public string Source { get; set; }
+            public string? Source { get; set; }
 
             [ArgPosition(2)]
             [ArgDescription("Output file.  If not specfied, defaults to current directory")]
-            public string Output { get; set; }
+            public string? Output { get; set; }
 
             [DefaultValue(Encoder.Avi)]
             [ArgDescription("The type of encoder to use")]
@@ -79,7 +79,7 @@ namespace ArgsTests
         {
             var temp = Path.GetTempFileName();
             var outFileName = "outputFileName";
-            var args = new string[] { "encode", temp, outFileName };
+            var args = new string?[] { "encode", temp, outFileName };
 
             var parsed = Args.ParseAction<VideoEncoderArgs>(args);
 
@@ -104,7 +104,7 @@ namespace ArgsTests
         public void TestUnknownAction()
         {
             var actionName = "wrongAction";
-            var args = new string[] { actionName };
+            var args = new string?[] { actionName };
             try
             {
                 var parsed = Args.ParseAction<VideoEncoderArgs>(args);
@@ -122,7 +122,7 @@ namespace ArgsTests
             var temp = Path.GetTempFileName();
             var outFileName = "outputFileName";
             double from = 10, to = 20;
-            var args = new string[] { "clip", temp, outFileName, "-from", from + "", "-to", to + "" };
+            var args = new string?[] { "clip", temp, outFileName, "-from", from + "", "-to", to + "" };
 
             var parsed = Args.ParseAction<VideoEncoderArgs>(args);
 

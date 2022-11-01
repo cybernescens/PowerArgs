@@ -23,7 +23,7 @@ namespace PowerArgs
         /// <summary>
         /// An event that fires when the hook writes usage to the console
         /// </summary>
-        public event Action<ConsoleString> UsageWritten;
+        public event Action<ConsoleString?> UsageWritten;
 
         private CommandLineArgument target;
 

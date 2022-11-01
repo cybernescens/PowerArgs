@@ -91,7 +91,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="expression">The expression text to parse</param>
         /// <returns>The parsed expression</returns>
-        public static ObjectPathExpression Parse(string expression)
+        public static ObjectPathExpression Parse(string? expression)
         {
             if (expression == null) throw new ArgumentNullException("path cannot be null");
             if (expression.Length == 0) throw new FormatException("Cannot parse empty string");
@@ -161,14 +161,14 @@ namespace PowerArgs
                         throw new ArgumentException("Unexpected token '" + currentToken.Value + "' at " + currentToken.Position);
                     }
 
-                    string indexValueText = currentToken.Value;
+                    string? indexValueText = currentToken.Value;
 
                     if (currentToken.TokenType == ObjectPathTokenType.StringLiteral)
                     {
                         indexValueText = indexValueText.Substring(1, indexValueText.Length - 2);
                     }
 
-                    object indexValue;
+                    object? indexValue;
                     int indexValueInt;
                     if (int.TryParse(indexValueText, out indexValueInt) == false)
                     {
@@ -278,7 +278,7 @@ namespace PowerArgs
                         {
                             throw new InvalidOperationException("Type " + currentObject.GetType().Name + " does not have a supported indexer property of type " + collectionEl.Index.GetType());
                         }
-                        currentObject = indexerProperty.GetValue(currentObject, new object[] { collectionEl.Index });
+                        currentObject = indexerProperty.GetValue(currentObject, new object?[] { collectionEl.Index });
                     }
                     ret.Add(new TraceNode() { Value = currentObject, MemberInfo = null });
                 }
@@ -317,13 +317,13 @@ public interface IObjectPathElement { }
         /// <summary>
         /// Gets the name of the property
         /// </summary>
-        public string PropertyName { get; private set; }
+        public string? PropertyName { get; private set; }
 
         /// <summary>
         /// Creates a property path element given a property name
         /// </summary>
         /// <param name="propertyName">the name of the property</param>
-        public PropertyPathElement(string propertyName)
+        public PropertyPathElement(string? propertyName)
         {
             if (propertyName == null) throw new ArgumentNullException("info cannot be null");
             this.PropertyName = propertyName;
@@ -333,7 +333,7 @@ public interface IObjectPathElement { }
         /// Returns the property name
         /// </summary>
         /// <returns>the property name</returns>
-        public override string ToString()
+        public override string? ToString()
         {
             return PropertyName;
         }
@@ -344,12 +344,12 @@ public interface IObjectPathElement { }
     /// </summary>
     public class IndexerPathElement : IObjectPathElement
     {
-        private object _index;
+        private object? _index;
 
         /// <summary>
         /// The indexer value, either a literal string or an integer
         /// </summary>
-        public object Index
+        public object? Index
         {
             get
             {
@@ -369,7 +369,7 @@ public interface IObjectPathElement { }
         /// Creates an indexer element given an indexer value
         /// </summary>
         /// <param name="index"></param>
-        public IndexerPathElement(object index)
+        public IndexerPathElement(object? index)
         {
             this.Index = index;
         }

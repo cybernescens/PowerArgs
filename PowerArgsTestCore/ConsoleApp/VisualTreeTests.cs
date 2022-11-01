@@ -15,14 +15,14 @@ namespace ArgsTests.CLI
         {
             ConsoleProvider.Current = new CliUnitTestConsole();
             ConsoleApp app = new ConsoleApp(80, 10);
-            app.Invoke(() =>
-            {
+
+            app.Invoke(() => {
                 int addCounter = 0, removeCounter = 0;
 
-                app.ControlAdded.SubscribeForLifetime((c) => { addCounter++; }, app);
-                app.ControlRemoved.SubscribeForLifetime((c) => { removeCounter++; }, app);
+                app.ControlAdded.SubscribeForLifetime(app, (object[] _) => { addCounter++; });
+                app.ControlRemoved.SubscribeForLifetime(app, (object[] _) => { removeCounter++; });
                 app.LayoutRoot.Id = "LayoutRoot";
-                ConsolePanel panel = app.LayoutRoot.Add(new ConsolePanel() { Id = "First panel" });
+                ConsolePanel? panel = app.LayoutRoot.Add(new ConsolePanel() { Id = "First panel" });
                 // direct child
                 Assert.AreEqual(1, addCounter);
                 Assert.AreEqual(0, removeCounter);

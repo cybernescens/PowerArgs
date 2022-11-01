@@ -19,7 +19,7 @@ namespace PowerArgs
         private ConsoleWiper menuWiper, resultsWiper;
         private RichTextCommandLineReader searchReader;
         private List<ContextAssistSearchResult> latestResults;
-        private string latestResultsSearchString;
+        private string? latestResultsSearchString;
         private int selectedIndex;
 
         /// <summary>
@@ -54,14 +54,14 @@ namespace PowerArgs
         /// </summary>
         /// <param name="searchString">the search string entered by the user</param>
         /// <returns>the search results as a list of strings</returns>
-        protected abstract List<ContextAssistSearchResult> GetResults(string searchString);
+        protected abstract List<ContextAssistSearchResult> GetResults(string? searchString);
 
         /// <summary>
         /// When implemented in the derived class, gets search results that match the search string asynchronously.  This ONLY gets called if SupportsAsync returns true.
         /// </summary>
         /// <param name="searchString">the search string entered by the user</param>
         /// <returns>an async task that will return the search results as a list of strings</returns>
-        protected abstract Task<List<ContextAssistSearchResult>> GetResultsAsync(string searchString);
+        protected abstract Task<List<ContextAssistSearchResult>> GetResultsAsync(string? searchString);
 
         /// <summary>
         /// Always returns true.  When overrided in a derived class the derived class can provide custom logic to determine whether or not this assist provider
@@ -237,7 +237,7 @@ namespace PowerArgs
             RedrawSearchResults();
         }
 
-        private void DoSearch(string searchString)
+        private void DoSearch(string? searchString)
         {
             // as soon as this next line runs, any in flight searches become invalid
             var myRequestId = expireableAsyncRequestManager.BeginRequest();
@@ -304,7 +304,7 @@ namespace PowerArgs
 
                 for (int i = 0; i < latestResults.Count; i++)
                 {
-                    ConsoleString searchResult = latestResults[i].RichDisplayText;
+                    ConsoleString? searchResult = latestResults[i].RichDisplayText;
 
                     if (i == selectedIndex)
                     {

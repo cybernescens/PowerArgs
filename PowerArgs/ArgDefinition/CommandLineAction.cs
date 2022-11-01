@@ -98,7 +98,7 @@ namespace PowerArgs
         /// <summary>
         /// The description that will be shown in the auto generated usage.
         /// </summary>
-        public string Description
+        public string? Description
         {
             get
             {
@@ -147,7 +147,7 @@ namespace PowerArgs
         /// <summary>
         /// The first alias or null if there are no aliases.
         /// </summary>
-        public string DefaultAlias
+        public string? DefaultAlias
         {
             get
             {
@@ -227,7 +227,7 @@ namespace PowerArgs
         /// Gets a string representation of this action.
         /// </summary>
         /// <returns>a string representation of this action</returns>
-        public override string ToString()
+        public override string? ToString()
         {
             var ret = "";
             if (Aliases.Count > 0) ret += DefaultAlias;
@@ -288,6 +288,18 @@ namespace PowerArgs
             ret.Arguments.AddRange(new CommandLineArgumentsDefinition(actionProperty.PropertyType).Arguments);
             ret.IgnoreCase = true;
 
+            AliasConventionProvider aliasConverter = new NoOpAliasConverter();
+
+            if (actionProperty.DeclaringType.HasAttr<ArgAliasConvention>())
+            {
+                aliasConverter = actionProperty.DeclaringType.Attr<ArgAliasConvention>().Provider;
+            }
+
+            if (actionProperty.HasAttr<ArgAliasConvention>())
+            {
+                aliasConverter = actionProperty.Attr<ArgAliasConvention>().Provider;
+            }
+
             if (actionProperty.DeclaringType.HasAttr<ArgIgnoreCase>() && actionProperty.DeclaringType.Attr<ArgIgnoreCase>().IgnoreCase == false)
             {
                 ret.IgnoreCase = false;
@@ -303,7 +315,7 @@ namespace PowerArgs
             // This line only calls into CommandLineArgument because the code to strip 'Args' off the end of the
             // action property name lives here.  This is a pre 2.0 hack that's only left in place to support apps that
             // use the 'Args' suffix pattern.
-            ret.Aliases.AddRange(CommandLineArgument.FindDefaultShortcuts(actionProperty, knownAliases, ret.IgnoreCase));
+            ret.Aliases.AddRange(CommandLineArgument.FindDefaultShortcuts(actionProperty, knownAliases, ret.IgnoreCase, aliasConverter));
 
             return ret;
         }
@@ -312,14 +324,31 @@ namespace PowerArgs
         {
             var ret = PropertyInitializer.CreateInstance<CommandLineAction>();
             ret.ActionMethod = actionMethod;
+      
+            AliasConventionProvider aliasConverter = new NoOpAliasConverter();
+
+            if (actionMethod.DeclaringType.HasAttr<ArgAliasConvention>())
+            {
+              aliasConverter = actionMethod.DeclaringType.Attr<ArgAliasConvention>().Provider;
+            }
+
+            if (actionMethod.HasAttr<ArgAliasConvention>())
+            {
+              aliasConverter = actionMethod.Attr<ArgAliasConvention>().Provider;
+            }
 
             ret.Source = actionMethod;
-            ret.Aliases.Add(actionMethod.Name);
+
+            var name = aliasConverter.Convert(actionMethod.Name);
+            if (name == null)
+              throw new InvalidArgDefinitionException("Alias convention provider resulted in unusable action name.");
+
+            ret.Aliases.Add(name);
 
             ret.Metadata.AddRange(actionMethod.Attrs<IArgMetadata>().AssertAreAllInstanceOf<ICommandLineActionMetadata>());
 
             ret.IgnoreCase = true;
-
+      
             if (actionMethod.DeclaringType.HasAttr<ArgIgnoreCase>() && actionMethod.DeclaringType.Attr<ArgIgnoreCase>().IgnoreCase == false)
             {
                 ret.IgnoreCase = false;
@@ -393,7 +422,7 @@ namespace PowerArgs
             return ret;
         }
 
-        internal bool IsMatch(string actionString)
+        internal bool IsMatch(string? actionString)
         {
             var ret = Aliases.Where(a => a.Equals(actionString, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)).Any();
             return ret;
@@ -417,7 +446,7 @@ namespace PowerArgs
         /// <param name="key">The key as if it was typed in on the command line.  This can also be an alias. </param>
         /// <param name="throwIfMoreThanOneMatch">If set to true then this method will throw and InvalidArgDeginitionException if more than 1 match is found</param>
         /// <returns>The first argument that matches the key.</returns>
-        public CommandLineArgument FindMatchingArgument(string key, bool throwIfMoreThanOneMatch = false)
+        public CommandLineArgument FindMatchingArgument(string? key, bool throwIfMoreThanOneMatch = false)
         {
             return CommandLineArgumentsDefinition.FindMatchingArgument(key, throwIfMoreThanOneMatch, this.Arguments);
         }

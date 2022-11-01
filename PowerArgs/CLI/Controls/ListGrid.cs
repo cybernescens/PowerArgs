@@ -1,84 +1,74 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
+﻿namespace PowerArgs.Cli;
 
-namespace PowerArgs.Cli
+public class ListGridOptions<T> where T : class
 {
+    public bool ShowColumnHeaders { get; set; } = true;
+    public bool ShowPager { get; set; } = true;
+    public bool EnablePagerKeyboardShortcuts { get; set; } = true;
+    public DataGridSelectionMode SelectionMode { get; set; } = DataGridSelectionMode.Row;
+    public List<ListGridColumnDefinition<T>> Columns { get; set; }
+    public ConsoleString? LoadingMessage { get; set; } = "Loading...".ToConsoleString();
+    public IListDataSource<T> DataSource { get; set; }
+}
 
+public enum DataGridSelectionMode
+{
+    None,
+    Row,
+    Cell
+}
 
-    public class ListGridOptions<T> where T : class
+public interface IListDataSource<T> where T : class
+{
+    bool HasDataForRange(int min, int count);
+    ListPageLoadResult<T> GetRange(int min, int count);
+    Task LoadRangeAsync(int min, int count);
+}
+
+public abstract class CachedRemoteList<T> : IListDataSource<T> where T : class
+{
+    private int? cachedCount;
+    private readonly Dictionary<int, T> cachedValues = new();
+
+    public ListPageLoadResult<T> GetRange(int min, int count)
     {
-        public bool ShowColumnHeaders { get; set; } = true;
-        public bool ShowPager { get; set; } = true;
-        public bool EnablePagerKeyboardShortcuts { get; set; } = true;
-        public DataGridSelectionMode SelectionMode { get; set; } = DataGridSelectionMode.Row;
-        public List<ListGridColumnDefinition<T>> Columns { get; set; }
-        public ConsoleString LoadingMessage { get; set; } = "Loading...".ToConsoleString();
-        public IListDataSource<T> DataSource { get; set; }
-    }
+        if (cachedCount.HasValue == false) throw new InvalidOperationException("I don't have the data yet");
 
-    public enum DataGridSelectionMode
-    {
-        None,
-        Row,
-        Cell
-    }
-
-    public interface IListDataSource<T> where T : class
-    {
-        bool HasDataForRange(int min, int count);
-        ListPageLoadResult<T> GetRange(int min, int count);
-        Task LoadRangeAsync(int min, int count);
-    }
-
-    public abstract class CachedRemoteList<T> : IListDataSource<T> where T : class
-    {
-        private Dictionary<int, T> cachedValues = new Dictionary<int, T>();
-        private int? cachedCount;
-
-        public ListPageLoadResult<T> GetRange(int min, int count)
-        {
-            if (cachedCount.HasValue == false) throw new InvalidOperationException("I don't have the data yet");
-            var ret = new ListPageLoadResult<T>();
-            ret.TotalCount = cachedCount.Value;
-            for (var i = min; i < min + count; i++)
+        var ret = new ListPageLoadResult<T>();
+        ret.TotalCount = cachedCount.Value;
+        for (var i = min; i < min + count; i++)
+            if (i < cachedCount.Value)
             {
-                if (i < cachedCount.Value)
-                {
-                    ret.Items.Add(cachedValues[i]);
-                }
-            }
-            return ret;
-        }
-
-        public bool HasDataForRange(int min, int count)
-        {
-            if (cachedCount.HasValue == false) return false;
-
-            for(var i = min; i < min+count; i++)
-            {
-                if(i < cachedCount.Value && cachedValues.ContainsKey(i) == false)
-                {
-                    return false;
-                }
+                ret.Items.Add(cachedValues[i]);
             }
 
-            return true;
-        }
+        return ret;
+    }
 
-        public Task LoadRangeAsync(int min, int count)
-        {
-            var d = new TaskCompletionSource<bool>();
-            var waitCount = 1;
-            Exception countException = null;
-            Exception dataException = null;
-            if (cachedCount.HasValue == false)
+    public bool HasDataForRange(int min, int count)
+    {
+        if (cachedCount.HasValue == false) return false;
+
+        for (var i = min; i < min + count; i++)
+            if (i < cachedCount.Value && cachedValues.ContainsKey(i) == false)
             {
-                waitCount++;
-                FetchCountAsync().Finally((p) =>
-                {
+                return false;
+            }
+
+        return true;
+    }
+
+    public Task LoadRangeAsync(int min, int count)
+    {
+        var d = new TaskCompletionSource<bool>();
+        var waitCount = 1;
+        Exception countException = null;
+        Exception dataException = null;
+        if (cachedCount.HasValue == false)
+        {
+            waitCount++;
+            FetchCountAsync().Finally(
+                p => {
                     if (p.Exception == null)
                     {
                         cachedCount = p.Result;
@@ -103,10 +93,10 @@ namespace PowerArgs.Cli
                         }
                     }
                 });
-            }
+        }
 
-            FetchRangeAsync(min, count).Finally((p) =>
-            {
+        FetchRangeAsync(min, count).Finally(
+            p => {
                 if (p.Exception == null)
                 {
                     lock (cachedValues)
@@ -147,383 +137,388 @@ namespace PowerArgs.Cli
                 }
             });
 
-            return d.Task;
-        }
-
-        protected abstract Task<int> FetchCountAsync();
-        protected abstract Task<List<T>> FetchRangeAsync(int min, int count);
+        return d.Task;
     }
 
-    public class SyncList<T> : IListDataSource<T> where T : class
-    {
-        private IList<T> innerList;
-        public SyncList(IList<T> innerList)
-        {
-            this.innerList = innerList;
-        }
+    protected abstract Task<int> FetchCountAsync();
+    protected abstract Task<List<T>> FetchRangeAsync(int min, int count);
+}
 
-        public ListPageLoadResult<T> GetRange(int min, int count) => new ListPageLoadResult<T>()
-        {
+public class SyncList<T> : IListDataSource<T> where T : class
+{
+    private readonly IList<T> innerList;
+
+    public SyncList(IList<T> innerList) { this.innerList = innerList; }
+
+    public ListPageLoadResult<T> GetRange(int min, int count) =>
+        new() {
             Items = innerList.Skip(min).Take(count).ToList(),
-            TotalCount = innerList.Count,
+            TotalCount = innerList.Count
         };
 
-        public bool HasDataForRange(int min, int count) => true;
+    public bool HasDataForRange(int min, int count) => true;
 
-        public Task LoadRangeAsync(int min, int count)
-        {
-            throw new NotImplementedException("This data source always has data for its range");
-        }
+    public Task LoadRangeAsync(int min, int count) =>
+        throw new NotImplementedException("This data source always has data for its range");
+}
+
+public class ListPageLoadResult<T> where T : class
+{
+    public List<T> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+}
+
+public class ListGridColumnDefinition<T> : DataGridColumnDefinition where T : class
+{
+    public Func<T, ConsoleControl> Formatter { get; set; }
+}
+
+public class ListGrid<T> : ProtectedConsolePanel where T : class
+{
+    private Exception? dataLoadException;
+    private readonly List<ConsoleControl> highlightedControls;
+    private readonly List<Lifetime> highlightLifetimes = new();
+    private int lastTopOfPageIndex;
+    private Task latestLoadingTask;
+    private int listCount = -1;
+    private readonly ListGridOptions<T> options;
+    private readonly DataGridPresenter presenter;
+    private int topOfPageDataIndex;
+
+    public ListGrid(ListGridOptions<T> options)
+    {
+        this.options = options;
+        highlightedControls = new List<ConsoleControl>();
+        CanFocus = options.SelectionMode != DataGridSelectionMode.None;
+        Focused.SubscribeForLifetime(this, UpdateHighlightedRowsToReflectCurrentFocus);
+        Unfocused.SubscribeForLifetime(this, UpdateHighlightedRowsToReflectCurrentFocus);
+        KeyInputReceived.SubscribeForLifetime(this, HandleArrows);
+
+        presenter = ProtectedPanel.Add(
+            new DataGridPresenter(
+                new DataGridCoreOptions {
+                    Columns = options.Columns.Select(c => c as DataGridColumnDefinition).ToList(),
+                    ShowColumnHeaders = options.ShowColumnHeaders,
+                    ShowPager = options.ShowPager,
+                    EnablePagerKeyboardShortcuts = options.EnablePagerKeyboardShortcuts
+                })).Fill();
+
+        presenter.BeforeRecompose.SubscribeForLifetime(this, BeforeRecompose);
+        presenter.AfterRecompose.SubscribeForLifetime(this, UpdateHighlightedRowsToReflectCurrentFocus);
+        presenter.FirstPageClicked.SubscribeForLifetime(this, FirstPageClicked);
+        presenter.PreviousPageClicked.SubscribeForLifetime(this, PreviousPageClicked);
+        presenter.NextPageClicked.SubscribeForLifetime(this, NextPageClicked);
+        presenter.LastPageClicked.SubscribeForLifetime(this, LastPageClicked);
+        SubscribeForLifetime(this, nameof(SelectedRowIndex), SelectedRowChanged);
+        SubscribeForLifetime(this, nameof(SelectedColumnIndex), SelectedColumnChanged);
     }
 
-    public class ListPageLoadResult<T> where T : class
+    public Event<Exception> DataLoadException { get; } = new();
+
+    public Event SelectionChanged { get; } = new();
+
+    public int SelectedRowIndex
     {
-        public List<T> Items { get; set; } = new List<T>();
-        public int TotalCount { get; set; }
+        get => Get<int>();
+        set => Set(value);
     }
 
-    public class ListGridColumnDefinition<T> : DataGridColumnDefinition where T : class
+    public int SelectedColumnIndex
     {
-        public Func<T, ConsoleControl> Formatter { get; set; }
+        get => Get<int>();
+        set => Set(value);
     }
 
-    public class ListGrid<T> : ProtectedConsolePanel where T : class
+    public int PageIndex => (int)Math.Floor(topOfPageDataIndex / (double)presenter.MaxRowsThatCanBePresented);
+    public int PageCount => (int)Math.Ceiling(listCount / (double)presenter.MaxRowsThatCanBePresented);
+
+    /// <summary>
+    ///     We could just call presenter.Recompose() when the selected row changes, but it would be slow.
+    ///     Instead, we only do this if this selection change caused a page change. In the cases when the
+    ///     selection change is within the current page we will just change the highlighted controls, which
+    ///     is much more performant.
+    /// </summary>
+    private void SelectedRowChanged()
     {
-        private ListGridOptions<T> options;
-        private int lastTopOfPageIndex;
-        private int topOfPageDataIndex = 0;
-        private int listCount = -1;
-        private DataGridPresenter presenter;
-        private Task latestLoadingTask;
-        private Exception dataLoadException;
-        private List<ConsoleControl> highlightedControls;
-        private List<Lifetime> highlightLifetimes = new List<Lifetime>();
-        public Event<Exception> DataLoadException { get; private set; } = new Event<Exception>();
-
-        public Event SelectionChanged { get; private set; } = new Event();
-
-        public int SelectedRowIndex { get => Get<int>(); set => Set(value); }
-        public int SelectedColumnIndex { get => Get<int>(); set => Set(value); }
-
-        public int PageIndex => (int)Math.Floor(topOfPageDataIndex / (double)presenter.MaxRowsThatCanBePresented);
-        public int PageCount => (int)Math.Ceiling(listCount / (double)presenter.MaxRowsThatCanBePresented);
-
-        public ListGrid(ListGridOptions<T> options) 
+        if (lastTopOfPageIndex != topOfPageDataIndex)
         {
-            this.options = options;
-            highlightedControls = new List<ConsoleControl>();
-            CanFocus = options.SelectionMode != DataGridSelectionMode.None;
-            Focused.SubscribeForLifetime(UpdateHighlightedRowsToReflectCurrentFocus, this);
-            Unfocused.SubscribeForLifetime(UpdateHighlightedRowsToReflectCurrentFocus, this);
-            KeyInputReceived.SubscribeForLifetime(HandleArrows, this);
-
-            presenter = ProtectedPanel.Add(new DataGridPresenter(new DataGridCoreOptions()
-            {
-                Columns = options.Columns.Select(c => c as DataGridColumnDefinition).ToList(),  
-                ShowColumnHeaders = options.ShowColumnHeaders,
-                ShowPager=options.ShowPager,
-                EnablePagerKeyboardShortcuts = options.EnablePagerKeyboardShortcuts,
-            })).Fill();
-
-            presenter.BeforeRecompose.SubscribeForLifetime(BeforeRecompose, this);
-            presenter.AfterRecompose.SubscribeForLifetime(UpdateHighlightedRowsToReflectCurrentFocus, this);
-            presenter.FirstPageClicked.SubscribeForLifetime(FirstPageClicked, this);
-            presenter.PreviousPageClicked.SubscribeForLifetime(PreviousPageClicked, this);
-            presenter.NextPageClicked.SubscribeForLifetime(NextPageClicked, this);
-            presenter.LastPageClicked.SubscribeForLifetime(LastPageClicked, this);
-            this.SubscribeForLifetime(nameof(SelectedRowIndex), SelectedRowChanged, this);
-            this.SubscribeForLifetime(nameof(SelectedColumnIndex), SelectedColumnChanged, this);
+            presenter.Recompose();
         }
-
-   
-     /// <summary>
-     /// We could just call presenter.Recompose() when the selected row changes, but it would be slow.
-     /// Instead, we only do this if this selection change caused a page change. In the cases when the 
-     /// selection change is within the current page we will just change the highlighted controls, which
-     /// is much more performant.
-     /// </summary>
-        private void SelectedRowChanged()
+        else
         {
-            if (lastTopOfPageIndex != topOfPageDataIndex)
-            {
-                presenter.Recompose();
-            }
-            else
-            {
-                var presentedRowIndex = SelectedRowIndex - topOfPageDataIndex;
-                var rowControls = presenter.ControlsByRow[presentedRowIndex];
-                highlightedControls.Clear();
-
-                for (var i = 0; i < rowControls.Count; i++)
-                {
-                    if (options.SelectionMode == DataGridSelectionMode.Row || i == SelectedColumnIndex)
-                    {
-                        highlightedControls.Add(rowControls[i]);
-                    }
-                }
-
-                Highlight(highlightedControls);
-            }
-            lastTopOfPageIndex = topOfPageDataIndex;
-            SelectionChanged.Fire();
-        }
-
-        private void SelectedColumnChanged()
-        {
-            var rowControls = presenter.ControlsByRow[SelectedRowIndex - topOfPageDataIndex];
+            var presentedRowIndex = SelectedRowIndex - topOfPageDataIndex;
+            var rowControls = presenter.ControlsByRow[presentedRowIndex];
             highlightedControls.Clear();
 
             for (var i = 0; i < rowControls.Count; i++)
-            {
                 if (options.SelectionMode == DataGridSelectionMode.Row || i == SelectedColumnIndex)
                 {
                     highlightedControls.Add(rowControls[i]);
                 }
-            }
 
             Highlight(highlightedControls);
-            SelectionChanged.Fire();
         }
 
-        public void Refresh()
+        lastTopOfPageIndex = topOfPageDataIndex;
+        SelectionChanged.Fire();
+    }
+
+    private void SelectedColumnChanged()
+    {
+        var rowControls = presenter.ControlsByRow[SelectedRowIndex - topOfPageDataIndex];
+        highlightedControls.Clear();
+
+        for (var i = 0; i < rowControls.Count; i++)
+            if (options.SelectionMode == DataGridSelectionMode.Row || i == SelectedColumnIndex)
+            {
+                highlightedControls.Add(rowControls[i]);
+            }
+
+        Highlight(highlightedControls);
+        SelectionChanged.Fire();
+    }
+
+    public void Refresh()
+    {
+        dataLoadException = null;
+        latestLoadingTask = null;
+        presenter.Recompose();
+    }
+
+    /// <summary>
+    ///     This is our hook into the inner grid presenter's composition pass. We take one of 3 paths here. If all is good
+    ///     and our data source can syncronously provide the current page of data then we render that data. If the data must
+    ///     be fetched asyncronously then we kick off the data loading process. If the most recent attempt to fetch data failed
+    ///     then we render error UX. The point is that we always know what state we're in before this method is called. This
+    ///     results in a clean
+    ///     separation between data loading and data visualization.
+    /// </summary>
+    private void BeforeRecompose()
+    {
+        if (dataLoadException != null)
         {
-            ConsoleApp.AssertAppThread(Application);
-            this.dataLoadException = null;
-            latestLoadingTask = null;
-            presenter.Recompose();
+            presenter.Options.IsLoading = true;
+            presenter.Options.LoadingMessage = "Failed to load data".ToRed();
+        }
+        else if (options.DataSource.HasDataForRange(topOfPageDataIndex, presenter.MaxRowsThatCanBePresented))
+        {
+            PrepareDataToBeShown();
+        }
+        else
+        {
+            KickoffDataLoading();
+        }
+    }
+
+    private void PrepareDataToBeShown()
+    {
+        highlightedControls.Clear();
+        // ensure the top of the page is on a proper page boundary
+        while (topOfPageDataIndex % presenter.MaxRowsThatCanBePresented != 0)
+        {
+            topOfPageDataIndex--;
         }
 
-        /// <summary>
-        /// This is our hook into the inner grid presenter's composition pass. We take one of 3 paths here. If all is good
-        /// and our data source can syncronously provide the current page of data then we render that data. If the data must
-        /// be fetched asyncronously then we kick off the data loading process. If the most recent attempt to fetch data failed
-        /// then we render error UX. The point is that we always know what state we're in before this method is called. This results in a clean
-        /// separation between data loading and data visualization.
-        /// </summary>
-        private void BeforeRecompose()
+        if (options.SelectionMode != DataGridSelectionMode.None)
         {
-            if (dataLoadException != null)
+            // ensure that the selected row is in the viewport
+            while (SelectedRowIndex < topOfPageDataIndex)
             {
-                presenter.Options.IsLoading = true;
-                presenter.Options.LoadingMessage = "Failed to load data".ToRed();
+                topOfPageDataIndex -= presenter.MaxRowsThatCanBePresented;
             }
-            else if(options.DataSource.HasDataForRange(topOfPageDataIndex, presenter.MaxRowsThatCanBePresented))
+
+            while (SelectedRowIndex >= topOfPageDataIndex + presenter.MaxRowsThatCanBePresented)
             {
-                PrepareDataToBeShown();   
-            }
-            else
-            {
-                KickoffDataLoading();   
+                topOfPageDataIndex += presenter.MaxRowsThatCanBePresented;
             }
         }
 
-        private void PrepareDataToBeShown()
+        var range = options.DataSource.GetRange(topOfPageDataIndex, presenter.MaxRowsThatCanBePresented);
+        listCount = range.TotalCount;
+        presenter.Options.Rows = new List<DataGridPresentationRow>();
+        presenter.Options.IsLoading = false;
+        for (var i = 0; i < range.Items.Count; i++)
         {
-            highlightedControls.Clear();
-            // ensure the top of the page is on a proper page boundary
-            while (topOfPageDataIndex % presenter.MaxRowsThatCanBePresented != 0)
+            var item = range.Items[i];
+            var deepIndex = i + topOfPageDataIndex;
+            var row = new DataGridPresentationRow();
+            presenter.Options.Rows.Add(row);
+            for (var j = 0; j < options.Columns.Count; j++)
             {
-                topOfPageDataIndex--;
-            }
+                var col = options.Columns[j];
 
-            if (options.SelectionMode != DataGridSelectionMode.None)
-            {
-                // ensure that the selected row is in the viewport
-                while (SelectedRowIndex < topOfPageDataIndex)
+                var shouldBeHighlighted = false;
+
+                if (options.SelectionMode == DataGridSelectionMode.Row && deepIndex == SelectedRowIndex)
                 {
-                    topOfPageDataIndex -= presenter.MaxRowsThatCanBePresented;
+                    shouldBeHighlighted = true;
+                }
+                else if (options.SelectionMode == DataGridSelectionMode.Cell &&
+                         deepIndex == SelectedRowIndex &&
+                         SelectedColumnIndex == j)
+                {
+                    shouldBeHighlighted = true;
                 }
 
-                while (SelectedRowIndex >= topOfPageDataIndex + presenter.MaxRowsThatCanBePresented)
-                {
-                    topOfPageDataIndex += presenter.MaxRowsThatCanBePresented;
-                }
-            }
-
-            var range = options.DataSource.GetRange(topOfPageDataIndex, presenter.MaxRowsThatCanBePresented);
-            this.listCount = range.TotalCount;
-            presenter.Options.Rows = new List<DataGridPresentationRow>();
-            presenter.Options.IsLoading = false;
-            for (var i = 0; i < range.Items.Count; i++)
-            {
-                var item = range.Items[i];
-                var deepIndex = i + topOfPageDataIndex;
-                var row = new DataGridPresentationRow();
-                presenter.Options.Rows.Add(row);
-                for (var j = 0; j < options.Columns.Count; j++)
-                {
-                    var col = options.Columns[j];
-
-                    bool shouldBeHighlighted = false;
-
-                    if (options.SelectionMode == DataGridSelectionMode.Row && deepIndex == SelectedRowIndex)
-                    {
-                        shouldBeHighlighted = true;
-                    }
-                    else if (options.SelectionMode == DataGridSelectionMode.Cell && deepIndex == SelectedRowIndex && SelectedColumnIndex == j)
-                    {
-                        shouldBeHighlighted = true;
-                    }
-
-                    row.Cells.Add(() =>
-                    {
+                row.Cells.Add(
+                    () => {
                         var control = col.Formatter(item);
                         if (shouldBeHighlighted)
                         {
                             highlightedControls.Add(control);
                         }
+
                         return control;
                     });
-                }
             }
-
-            presenter.Options.PagerState = new PagerState()
-            {
-                AllowRandomAccess = true,
-                CanGoBackwards = PageIndex > 0,
-                CanGoForwards = PageIndex < PageCount - 1,
-                CurrentPageLabelValue = $"Page {PageIndex + 1} of {PageCount}".ToConsoleString(),
-            };
         }
 
-        private void KickoffDataLoading()
-        {
-            presenter.Options.IsLoading = true;
-            presenter.Options.LoadingMessage = options.LoadingMessage;
-            var myTask = options.DataSource.LoadRangeAsync(topOfPageDataIndex, presenter.MaxRowsThatCanBePresented);
+        presenter.Options.PagerState = new PagerState {
+            AllowRandomAccess = true,
+            CanGoBackwards = PageIndex > 0,
+            CanGoForwards = PageIndex < PageCount - 1,
+            CurrentPageLabelValue = $"Page {PageIndex + 1} of {PageCount}".ToConsoleString()
+        };
+    }
 
-            myTask.Finally((p) => Application.InvokeNextCycle(() =>
-            {
-                if (myTask == latestLoadingTask)
-                {
-                    dataLoadException = p.Exception;
-                    presenter.Recompose();
-                }
-            }));
+    private void KickoffDataLoading()
+    {
+        presenter.Options.IsLoading = true;
+        presenter.Options.LoadingMessage = options.LoadingMessage;
+        var myTask = options.DataSource.LoadRangeAsync(topOfPageDataIndex, presenter.MaxRowsThatCanBePresented);
 
-            latestLoadingTask = myTask;
-        }
-
-        private void UpdateHighlightedRowsToReflectCurrentFocus() => Highlight(highlightedControls);
-
-        private void Highlight(List<ConsoleControl> controls)
-        {
-            foreach (var lifetime in highlightLifetimes)
-            {
-                lifetime.Dispose();
-            }
-
-            highlightLifetimes.Clear();
-
-            foreach (var cellDisplayControl in controls)
-            {
-                var highlightLifetime = new Lifetime();
-                highlightLifetimes.Add(highlightLifetime);
-                if (cellDisplayControl is Label)
-                {
-                    var label = (cellDisplayControl as Label);
-                    var originalText = label.Text;
-                    label.Text = label.Text.ToBlack().ToDifferentBackground(HasFocus ? ConsoleColor.Cyan : ConsoleColor.DarkGray);
-                    highlightLifetime.OnDisposed(() =>
+        myTask.Finally(
+            p => Application.InvokeNextCycle(
+                () => {
+                    if (myTask == latestLoadingTask)
                     {
+                        dataLoadException = p.Exception;
+                        presenter.Recompose();
+                    }
+                }));
+
+        latestLoadingTask = myTask;
+    }
+
+    private void UpdateHighlightedRowsToReflectCurrentFocus() => Highlight(highlightedControls);
+
+    private void Highlight(List<ConsoleControl> controls)
+    {
+        foreach (var lifetime in highlightLifetimes)
+            lifetime.Dispose();
+
+        highlightLifetimes.Clear();
+
+        foreach (var cellDisplayControl in controls)
+        {
+            var highlightLifetime = new Lifetime();
+            highlightLifetimes.Add(highlightLifetime);
+            if (cellDisplayControl is Label)
+            {
+                var label = cellDisplayControl as Label;
+                var originalText = label.Text;
+                label.Text = label.Text.ToBlack()
+                    .ToDifferentBackground(HasFocus ? ConsoleColor.Cyan : ConsoleColor.DarkGray);
+
+                highlightLifetime.OnDisposed(
+                    () => {
                         if (label.IsExpired == false)
                         {
                             label.Text = originalText;
                         }
                     });
-                }
-                else
-                {
-                    var originalFg = cellDisplayControl.Foreground;
-                    var originalBg = cellDisplayControl.Background;
-                    cellDisplayControl.Foreground = ConsoleColor.White;
-                    cellDisplayControl.Background = HasFocus ? ConsoleColor.Cyan : ConsoleColor.DarkGray;
-                    highlightLifetime.OnDisposed(() =>
-                    {
+            }
+            else
+            {
+                var originalFg = cellDisplayControl.Foreground;
+                var originalBg = cellDisplayControl.Background;
+                cellDisplayControl.Foreground = ConsoleColor.White;
+                cellDisplayControl.Background = HasFocus ? ConsoleColor.Cyan : ConsoleColor.DarkGray;
+                highlightLifetime.OnDisposed(
+                    () => {
                         if (cellDisplayControl.IsExpired == false)
                         {
                             cellDisplayControl.Foreground = originalFg;
                             cellDisplayControl.Background = originalBg;
                         }
                     });
+            }
+        }
+    }
+
+    private void FirstPageClicked()
+    {
+        topOfPageDataIndex = 0;
+        SelectedRowIndex = topOfPageDataIndex;
+    }
+
+    private void PreviousPageClicked()
+    {
+        topOfPageDataIndex = Math.Max(0, topOfPageDataIndex - presenter.MaxRowsThatCanBePresented);
+        SelectedRowIndex = topOfPageDataIndex;
+    }
+
+    private void NextPageClicked()
+    {
+        topOfPageDataIndex = Math.Min(listCount - 1, topOfPageDataIndex + presenter.MaxRowsThatCanBePresented);
+        SelectedRowIndex = topOfPageDataIndex;
+    }
+
+    private void LastPageClicked()
+    {
+        topOfPageDataIndex = (PageCount - 1) * presenter.MaxRowsThatCanBePresented;
+        SelectedRowIndex = topOfPageDataIndex;
+    }
+
+    private void HandleArrows(ConsoleKeyInfo keyInfo)
+    {
+        if (presenter.Options.IsLoading)
+        {
+            return;
+        }
+
+        if (options.SelectionMode != DataGridSelectionMode.None)
+        {
+            if (keyInfo.Key == ConsoleKey.UpArrow)
+            {
+                if (SelectedRowIndex > 0)
+                {
+                    if (SelectedRowIndex == topOfPageDataIndex)
+                    {
+                        topOfPageDataIndex = Math.Max(0, SelectedRowIndex - presenter.MaxRowsThatCanBePresented);
+                    }
+
+                    SelectedRowIndex--;
+                }
+            }
+            else if (keyInfo.Key == ConsoleKey.DownArrow)
+            {
+                if (SelectedRowIndex < listCount - 1)
+                {
+                    if (SelectedRowIndex == topOfPageDataIndex + presenter.MaxRowsThatCanBePresented - 1)
+                    {
+                        topOfPageDataIndex = SelectedRowIndex + 1;
+                    }
+
+                    SelectedRowIndex++;
                 }
             }
         }
 
-        private void FirstPageClicked()
+        if (options.SelectionMode == DataGridSelectionMode.Cell)
         {
-            topOfPageDataIndex = 0;
-            SelectedRowIndex = topOfPageDataIndex;
-        }
-
-        private void PreviousPageClicked()
-        {
-            topOfPageDataIndex = Math.Max(0, topOfPageDataIndex - presenter.MaxRowsThatCanBePresented);
-            SelectedRowIndex = topOfPageDataIndex;
-        }
-
-        private void NextPageClicked()
-        {
-            topOfPageDataIndex = Math.Min(listCount - 1, topOfPageDataIndex + presenter.MaxRowsThatCanBePresented);
-            SelectedRowIndex = topOfPageDataIndex;
-        }
-
-        private void LastPageClicked()
-        {
-            topOfPageDataIndex = (PageCount - 1) * presenter.MaxRowsThatCanBePresented;
-            SelectedRowIndex = topOfPageDataIndex;
-        }
-
-        private void HandleArrows(ConsoleKeyInfo keyInfo)
-        {
-            if (presenter.Options.IsLoading)
+            if (keyInfo.Key == ConsoleKey.LeftArrow)
             {
-                return;
-            }
-
-            if (options.SelectionMode != DataGridSelectionMode.None)
-            {
-                if (keyInfo.Key == ConsoleKey.UpArrow)
+                if (SelectedColumnIndex > 0)
                 {
-                    if (SelectedRowIndex > 0)
-                    {
-                        if (SelectedRowIndex == topOfPageDataIndex)
-                        {
-                            topOfPageDataIndex = Math.Max(0, SelectedRowIndex - presenter.MaxRowsThatCanBePresented);
-
-                        }
-
-                        SelectedRowIndex--;
-                    }
-                }
-                else if (keyInfo.Key == ConsoleKey.DownArrow)
-                {
-                    if (SelectedRowIndex < listCount - 1)
-                    {
-                        if (SelectedRowIndex == topOfPageDataIndex + presenter.MaxRowsThatCanBePresented - 1)
-                        {
-                            topOfPageDataIndex = SelectedRowIndex + 1;
-                        }
-                        SelectedRowIndex++;
-                    }
+                    SelectedColumnIndex--;
                 }
             }
-
-            if (options.SelectionMode == DataGridSelectionMode.Cell)
+            else if (keyInfo.Key == ConsoleKey.RightArrow)
             {
-                if (keyInfo.Key == ConsoleKey.LeftArrow)
+                if (SelectedColumnIndex < options.Columns.Count - 1)
                 {
-                    if (SelectedColumnIndex > 0)
-                    {
-                        SelectedColumnIndex--;
-                    }
-                }
-                else if (keyInfo.Key == ConsoleKey.RightArrow)
-                {
-                    if (SelectedColumnIndex < options.Columns.Count - 1)
-                    {
-                        SelectedColumnIndex++;
-                    }
+                    SelectedColumnIndex++;
                 }
             }
         }

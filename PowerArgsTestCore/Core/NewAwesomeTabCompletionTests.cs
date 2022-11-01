@@ -12,7 +12,7 @@ namespace ArgsTests
     public class AnimalCompletionSource : ITabCompletionSource
     {
         private SimpleTabCompletionSource source = new SimpleTabCompletionSource(new string[] { "Chicken", "Cow" }) { MinCharsBeforeCyclingBegins = 0 };
-        public bool TryComplete(TabCompletionContext context, out string completion)
+        public bool TryComplete(TabCompletionContext context, out string? completion)
         {
             return source.TryComplete(context, out completion);
         }

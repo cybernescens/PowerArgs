@@ -28,12 +28,13 @@ namespace ArgsTests.CLI.Controls
             testCli.Input.Enqueue(new ConsoleKeyInfo('a', ConsoleKey.A, false, false, false));
 
 
-            string result = null;
+            string? result = null;
 
-            app.Stopping.SubscribeForLifetime(() =>
-            {
-                result = testCli.Buffer.ToString();
-            }, app);
+            app.Stopping.SubscribeForLifetime(app,
+                () =>
+                {
+                    result = testCli.Buffer.ToString();
+                });
 
             testCli.Input.Enqueue(new ConsoleKeyInfo('*', ConsoleKey.Escape, false, false, false));
             task.Wait();

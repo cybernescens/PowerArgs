@@ -43,7 +43,7 @@ namespace ArgsTests
         [TestMethod]
         public void TestConfigToolArgs()
         {
-            var args = new string[] { "config", "background", "green" };
+            var args = new string?[] { "config", "background", "green" };
 
             var parsed = Args.ParseAction<ConfigurationToolArgs>(args);
             Assert.AreEqual("background", parsed.Args.ConfigArgs.ConfigName);

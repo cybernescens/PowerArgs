@@ -29,8 +29,8 @@ namespace PowerArgs.Cli
                     {
                         CanFocus = false,
                         Value = new ConsoleCharacter((char)r.Next((int)'a', (int)'z'),
-                        foregroundColor: fore ? primaryColor : bgColor,
-                        backgroundColor: fore ? bgColor : (r.NextDouble() < .5 ? primaryColor : accentColor)),
+                            foregroundColor: fore ? primaryColor : bgColor,
+                            backgroundColor: fore ? bgColor : (r.NextDouble() < .5 ? primaryColor : accentColor)),
                         X = r.Next(0, Width)
                     });
                     if (this.IsExpired == false && this.Application != null)

@@ -1,51 +1,42 @@
-﻿using System;
+﻿namespace PowerArgs.Cli;
 
-namespace PowerArgs.Cli
+public class FrameRateMeter
 {
-    public class FrameRateMeter
+    private DateTime currentSecond;
+    private int framesInCurrentSecond;
+    private readonly DateTime start = DateTime.Now;
+
+    public FrameRateMeter()
     {
-        private DateTime start;
-        private DateTime currentSecond;
-        private int framesInCurrentSecond;
-        private int framesInPreviousSecond;
+        currentSecond = start;
+        framesInCurrentSecond = 0;
+    }
 
-        public int TotalFrames { get; private set; }
+    public int TotalFrames { get; private set; }
+    public int CurrentFps { get; private set; }
 
-        public int CurrentFPS
+    public void Increment()
+    {
+        var now = DateTime.UtcNow;
+        TotalFrames++;
+
+        if (AreSameSecond(now, currentSecond))
         {
-            get
-            {
-                return framesInPreviousSecond;
-            }
+            framesInCurrentSecond++;
         }
-
-        public FrameRateMeter()
+        else
         {
-            start = DateTime.UtcNow;
-            currentSecond = start;
+            CurrentFps = framesInCurrentSecond;
             framesInCurrentSecond = 0;
-        }
-
-        public void Increment()
-        {
-            var now = DateTime.UtcNow;
-            TotalFrames++;
-
-            if(AreSameSecond(now, currentSecond))
-            {
-                framesInCurrentSecond++;
-            }
-            else
-            {
-                framesInPreviousSecond = framesInCurrentSecond;
-                framesInCurrentSecond = 0;
-                currentSecond = now;
-            }
-        }
-
-        private bool AreSameSecond(DateTime a, DateTime b)
-        {
-            return a.Year == b.Year && a.Month == b.Month && a.Day == b.Day && a.Hour == b.Hour && a.Minute == b.Minute && a.Second == b.Second;
+            currentSecond = now;
         }
     }
+
+    private bool AreSameSecond(DateTime a, DateTime b) =>
+        a.Year == b.Year &&
+        a.Month == b.Month &&
+        a.Day == b.Day &&
+        a.Hour == b.Hour &&
+        a.Minute == b.Minute &&
+        a.Second == b.Second;
 }

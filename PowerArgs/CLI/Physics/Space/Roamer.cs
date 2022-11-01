@@ -9,7 +9,7 @@ namespace PowerArgs.Cli.Physics
         private Force currentForce;
         private float accelleration;
 
-        public Roamer(SpacialElement roamer, Velocity roamerSpeed, float accelleration) : base(roamer)
+        public Roamer(SpacialElement? roamer, Velocity roamerSpeed, float accelleration) : base(roamer)
         {
             this.RoamerSpeed = roamerSpeed;
             this.accelleration = accelleration;

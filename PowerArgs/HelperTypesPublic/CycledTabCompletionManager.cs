@@ -16,17 +16,17 @@ namespace PowerArgs
         public int MinCharsBeforeCyclingBegins { get; set; }
 
         int lastIndex;
-        string lastCompletion;
-        string lastSoFar;
+        string? lastCompletion;
+        string? lastSoFar;
  
-        public bool Cycle(TabCompletionContext context, Func<List<string>> evaluation, out string completion)
+        public bool Cycle(TabCompletionContext context, Func<List<string>> evaluation, out string? completion)
         {
             if (context.CompletionCandidate == lastCompletion && lastCompletion != null)
             {
                 context.CompletionCandidate = lastSoFar;
             }
 
-            var candidates = evaluation();
+            List<string?> candidates = evaluation();
 
             if (context.CompletionCandidate == lastSoFar) lastIndex = context.Shift ? lastIndex - 1 : lastIndex + 1;
             if (lastIndex >= candidates.Count) lastIndex = 0;

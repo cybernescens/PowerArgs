@@ -57,7 +57,7 @@ namespace ArgsTests
             }
             finally
             {
-                ConsoleOutInterceptor.Instance.Detatch();
+                ConsoleOutInterceptor.Instance.Detach();
             }
         }
     }

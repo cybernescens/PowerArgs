@@ -41,9 +41,9 @@ namespace PowerArgs
         /// </summary>
         /// <param name="name">the name of the property being populated.  This validator doesn't do anything with it.</param>
         /// <param name="arg">The value specified on the command line.</param>
-        public override void Validate(string name, ref string arg)
+        public override void Validate(string name, ref string? arg)
         {
-            string input = arg;
+            string? input = arg;
             MatchCollection matches = Regex.Matches(arg, regex);
             exactMatch = (from m in matches.ToList() where m.Value == input select m).SingleOrDefault();
             if (exactMatch == null) throw new ValidationArgException(errorMessage + ": " + arg);

@@ -2,8 +2,8 @@
 {
     public abstract class SpacialElementFunction : TimeFunction
     {
-        public SpacialElement Element { get; set; }
-        public SpacialElementFunction(SpacialElement target)
+        public SpacialElement? Element { get; set; }
+        public SpacialElementFunction(SpacialElement? target)
         {
             this.Element = target;
 
@@ -24,7 +24,7 @@
             }
             else
             {
-                target.Added.SubscribeForLifetime(() => { Time.CurrentTime.Add(this); }, target.Lifetime);
+                target.Added.SubscribeForLifetime(target.Lifetime, () => { Time.CurrentTime.Add(this); });
             }
 
 

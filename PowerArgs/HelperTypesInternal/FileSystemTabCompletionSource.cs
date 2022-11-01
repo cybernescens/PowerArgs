@@ -7,9 +7,10 @@ namespace PowerArgs
 {
     internal class FileSystemTabCompletionSource : ITabCompletionSource
     {
-        string lastSoFar = null, lastCompletion = null;
+        string? lastSoFar = null;
+        string lastCompletion = null;
         int tabIndex = -1;
-        public bool TryComplete(TabCompletionContext context, out string completion)
+        public bool TryComplete(TabCompletionContext context, out string? completion)
         {
             completion = null;
             try

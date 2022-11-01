@@ -12,7 +12,7 @@ namespace PowerArgs.Samples
 
     public class HelloWorldParse
     {
-        public static void _Main(string[] args)
+        public static void _Main(string?[] args)
         {
             try
             {

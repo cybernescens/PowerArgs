@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+      <LangVersion>Preview</LangVersion>
     <Version>3.7</Version>
     <Authors>Adam Abdelhamed</Authors>
     <Company>Adam Abdelhamed</Company>
@@ -25,7 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="HelperTypesPublic\Tos\" />
   </ItemGroup>
  
 

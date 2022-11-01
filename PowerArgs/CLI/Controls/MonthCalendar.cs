@@ -78,9 +78,9 @@ namespace PowerArgs.Cli
         /// The options object that was passed to the constructor
         /// </summary>
         public MonthCalendarOptions Options { get; private set; }
-        private GridLayout gridLayout;
+        private GridLayout? gridLayout;
         private Dictionary<DateTime, Tuple<int, int>> coordinateMemo = new Dictionary<DateTime, Tuple<int, int>>();
-        private Dictionary<string, ConsolePanel> dateCells = new Dictionary<string, ConsolePanel>();
+        private Dictionary<string, ConsolePanel?> dateCells = new Dictionary<string, ConsolePanel?>();
 
         /// <summary>
         /// Initializes the MonthCalendar control
@@ -118,28 +118,31 @@ namespace PowerArgs.Cli
             if (Options.AdvanceMonthBackwardKey == null || Options.AdvanceMonthForwardKey == null) return;
             CanFocus = true;
 
-            this.KeyInputReceived.SubscribeForLifetime(key =>
-            {
-                var back = Options.AdvanceMonthBackwardKey;
-                var fw = Options.AdvanceMonthForwardKey;
+            this.KeyInputReceived.SubscribeForLifetime(this,
+                key =>
+                {
+                    var back = Options.AdvanceMonthBackwardKey;
+                    var fw = Options.AdvanceMonthForwardKey;
 
-                var backModifierMatch = back.Modifier == null || key.Modifiers.HasFlag(back.Modifier);
-                if (key.Key == back.Key && backModifierMatch) SeekByMonths(-1);
+                    var backModifierMatch = back.Modifier == null || key.Modifiers.HasFlag(back.Modifier);
+                    if (key.Key == back.Key && backModifierMatch) SeekByMonths(-1);
 
-                var fwModifierMatch = fw.Modifier == null || key.Modifiers.HasFlag(fw.Modifier);
-                if (key.Key == fw.Key && fwModifierMatch) SeekByMonths(1);
+                    var fwModifierMatch = fw.Modifier == null || key.Modifiers.HasFlag(fw.Modifier);
+                    if (key.Key == fw.Key && fwModifierMatch) SeekByMonths(1);
 
-            }, this);
+                });
 
-            this.Focused.SubscribeForLifetime(() =>
-            {  
-                Refresh();
-            }, this);
+            this.Focused.SubscribeForLifetime(this,
+                () =>
+                {  
+                    Refresh();
+                });
 
-            this.Unfocused.SubscribeForLifetime(() =>
-            {
-                Refresh();
-            }, this);
+            this.Unfocused.SubscribeForLifetime(this,
+                () =>
+                {
+                    Refresh();
+                });
         }
 
         /// <summary>
@@ -227,7 +230,7 @@ namespace PowerArgs.Cli
                 {
                     var key = GetKeyForCoordinates(y, x);
                     var outerPanel = new ConsolePanel() { Background = Foreground };
-                    var innerPanel = outerPanel.Add(new ConsolePanel() { Background = Foreground }).Fill(padding: new Thickness(x == 0 ? 2 : 0, 1, 0, 1));
+                    ConsolePanel? innerPanel = outerPanel.Add(new ConsolePanel() { Background = Foreground }).Fill(padding: new Thickness(x == 0 ? 2 : 0, 1, 0, 1));
                     dateCells.Add(key, innerPanel);
                     gridLayout.Add(outerPanel, x, y);
 
@@ -246,13 +249,13 @@ namespace PowerArgs.Cli
 
         private void PopulateDayOfWeekLabels()
         {
-            var dayLabels = new List<Label>();
+            var dayLabels = new List<Label?>();
             for (var day = 0; day < 7; day++)
             {
                 var dayOfWeek = (DayOfWeek)day;
                 var panel = new ConsolePanel();
                 panel.Background = Foreground;
-                var label = panel.Add(new Label() { Mode = LabelRenderMode.ManualSizing, Background = Foreground }).FillHorizontally(padding: new Thickness(day == 0 ? 2 : 0, 0, 0, 0)).CenterVertically();
+                Label? label = panel.Add(new Label() { Mode = LabelRenderMode.ManualSizing, Background = Foreground }).FillHorizontally(padding: new Thickness(day == 0 ? 2 : 0, 0, 0, 0)).CenterVertically();
                 dayLabels.Add(label);
                 gridLayout.Add(panel, day, 0);
                 Func<int> smallestDayLabelWidth = () => dayLabels.Select(l => l.Width).Min();
@@ -268,7 +271,7 @@ namespace PowerArgs.Cli
                 CalculateGridCoordinatesForDate(current, out int row, out int col);
                 var key = GetKeyForCoordinates(row, col);
                 var cellPanel = dateCells[key];
-                var extensiblePanel = cellPanel.Add(new ConsolePanel()).Fill(padding: new Thickness(0, 1, 1, 0));
+                ConsolePanel? extensiblePanel = cellPanel.Add(new ConsolePanel()).Fill(padding: new Thickness(0, 1, 1, 0));
                 Options.CustomizeContent?.Invoke(current, extensiblePanel);
                 cellPanel.Background = Background;
                 cellPanel.Add(new Label() { Tag = DayOfWeekTag, Text = ("" + current.Day).ToConsoleString(Foreground, Background) }).DockToTop();
@@ -301,8 +304,8 @@ namespace PowerArgs.Cli
 
         private void SetupMinimumSizeExperience()
         {
-            ConsolePanel shield = null;
-            ConsoleControl min = null;
+            ConsolePanel? shield = null;
+            ConsoleControl? min = null;
             min = ProtectedPanel.Add(new MinimumSizeEnforcerPanel(new MinimumSizeEnforcerPanelOptions()
             {
                 MinWidth = MinWidth,
@@ -319,7 +322,7 @@ namespace PowerArgs.Cli
             })).Fill();
         }
 
-        private ConsoleString GetDayOfWeekDisplay(DayOfWeek day, int width)
+        private ConsoleString? GetDayOfWeekDisplay(DayOfWeek day, int width)
         {
             var maxSize = Enum.GetNames(day.GetType()).Select(d => d.ToString().Length).Max();
             var fullLabelString = ("" + day).ToConsoleString(Background, Foreground);

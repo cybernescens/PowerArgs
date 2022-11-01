@@ -15,7 +15,7 @@ namespace PowerArgs
         private static Lazy<IStickyArgPersistenceProvider> defaultPersistenceProvider = new Lazy<IStickyArgPersistenceProvider>(() => { return new DefaultStickyArgPersistenceProvider(); });
 
         private string file;
-        private Dictionary<string, string> stickyArgs;
+        private Dictionary<string?, string> stickyArgs;
         private IStickyArgPersistenceProvider userSpecifiedPersistenceProvider;
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace PowerArgs
         private void Init(string file)
         {
             BeforePopulatePropertyPriority = 10;
-            stickyArgs = new Dictionary<string, string>();
+            stickyArgs = new Dictionary<string?, string>();
             this.file = file;
         }
 
@@ -81,10 +81,10 @@ namespace PowerArgs
         /// </summary>
         /// <param name="name">the argument key</param>
         /// <returns>the sticky value or null if there is not one</returns>
-        public string GetStickyArg(string name)
+        public string? GetStickyArg(string? name)
         {
             Load();
-            string ret = null;
+            string? ret = null;
             if (stickyArgs.TryGetValue(name, out ret) == false) return null;
             return ret;
         }
@@ -94,7 +94,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="name">The identifier of the arg</param>
         /// <param name="value">the sticky value</param>
-        public void SetStickyArg(string name, string value)
+        public void SetStickyArg(string? name, string? value)
         {
             Load();
             if (stickyArgs.ContainsKey(name))
@@ -131,13 +131,13 @@ namespace PowerArgs
         /// </summary>
         /// <param name="stickyArgs">The names and values of the arguments to save.</param>
         /// <param name="pathInfo">The string that was passed to the StickyArg attribue (usually a file path).</param>
-        void Save(Dictionary<string, string> stickyArgs, string pathInfo);
+        void Save(Dictionary<string?, string> stickyArgs, string pathInfo);
         /// <summary>
         /// This method is called when it is time to load the sticky args.
         /// </summary>
         /// <param name="pathInfo">The string that was passed to the StickyArg attribue (usually a file path).</param>
         /// <returns>The loaded sticky args.</returns>
-        Dictionary<string, string> Load(string pathInfo);
+        Dictionary<string?, string> Load(string pathInfo);
     }
 
     /// <summary>
@@ -180,7 +180,7 @@ namespace PowerArgs
 
     internal class DefaultStickyArgPersistenceProvider : IStickyArgPersistenceProvider
     {
-        public void Save(Dictionary<string, string> stickyArgs, string pathInfo)
+        public void Save(Dictionary<string?, string> stickyArgs, string pathInfo)
         {
             pathInfo = pathInfo ?? DefaultFilePath;
 
@@ -193,7 +193,7 @@ namespace PowerArgs
             File.WriteAllLines(pathInfo, lines);
         }
 
-        public Dictionary<string, string> Load(string pathInfo)
+        public Dictionary<string?, string> Load(string pathInfo)
         {
             pathInfo = pathInfo ?? DefaultFilePath;
 
@@ -202,7 +202,7 @@ namespace PowerArgs
                 Directory.CreateDirectory(Path.GetDirectoryName(pathInfo));
             }
 
-            Dictionary<string, string> ret = new Dictionary<string, string>();
+            Dictionary<string?, string> ret = new Dictionary<string?, string>();
             if (File.Exists(pathInfo) == false) return ret;
 
             foreach (var line in File.ReadAllLines(pathInfo))
@@ -210,7 +210,7 @@ namespace PowerArgs
                 int separator = line.IndexOf("=");
                 if (separator < 0 || line.Trim().StartsWith("#")) continue;
 
-                string key = line.Substring(0, separator).Trim();
+                string? key = line.Substring(0, separator).Trim();
                 string val = separator == line.Length - 1 ? "" : line.Substring(separator + 1).Trim();
 
                 ret.Add(key, val);

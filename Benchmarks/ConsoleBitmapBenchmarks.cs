@@ -145,12 +145,12 @@ namespace Benchmarks
             throw new NotImplementedException();
         }
 
-        public void Write(object output)
+        public void Write(object? output)
         {
 
         }
 
-        public void Write(ConsoleString consoleString)
+        public void Write(ConsoleString? consoleString)
         {
 
         }
@@ -165,12 +165,12 @@ namespace Benchmarks
      
         }
 
-        public void WriteLine(object output)
+        public void WriteLine(object? output)
         {
 
         }
 
-        public void WriteLine(ConsoleString consoleString)
+        public void WriteLine(ConsoleString? consoleString)
         {
 
         }

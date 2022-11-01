@@ -1,21 +1,23 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PowerArgs;
-using System;
-using System.Threading.Tasks;
+﻿using System;
 using System.Linq;
-namespace ArgsTests
+using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PowerArgs;
+
+namespace ArgsTests;
+
+[TestClass]
+[TestCategory(Categories.Eventing)]
+public class EventLoopTests
 {
-    [TestClass]
-    [TestCategory(Categories.Eventing)]
-    public class EventLoopTests
+    [TestMethod]
+    public async Task TestEventLoopBasic()
     {
-        [TestMethod]
-        public async Task TestEventLoopBasic()
-        {
-            var loop = new EventLoop();
-            int fired = 0;
-            loop.Invoke(async () =>
-            {
+        var loop = new EventLoop();
+        var fired = 0;
+
+        loop.Invoke(
+            async () => {
                 Assert.AreEqual(0, loop.Cycle);
                 fired++;
                 await Task.Yield();
@@ -24,46 +26,46 @@ namespace ArgsTests
                 loop.Stop();
             });
 
+        await loop.Start();
+        Assert.AreEqual(2, fired);
+    }
+
+    [TestMethod]
+    public async Task TestEventLoopSynchronousException()
+    {
+        var expectedError = "This is the expected error message";
+        var loop = new EventLoop();
+        loop.Invoke(() => throw new Exception(expectedError));
+        try
+        {
             await loop.Start();
-            Assert.AreEqual(2, fired);
+            Assert.Fail("An exception should have been thrown");
         }
-
-        [TestMethod]
-        public async Task TestEventLoopSyncronousException()
+        catch (Exception ex)
         {
-            var expectedError = "This is the expected error message";
-            var loop = new EventLoop();
-            loop.Invoke(() => throw new Exception(expectedError));
-            try
-            {
-                await loop.Start();
-                Assert.Fail("An exception should have been thrown");
-            }
-            catch(Exception ex)
-            {
-                Assert.AreEqual(expectedError, ex.Clean().Single().Message);
-            }
+            Assert.AreEqual(expectedError, ex.Clean().Single().Message);
         }
+    }
 
-        [TestMethod]
-        public async Task TestEventLoopAsyncronousException()
-        {
-            var expectedError = "This is the expected error message";
-            var loop = new EventLoop();
-            loop.Invoke(async () =>
-            {
+    [TestMethod]
+    public async Task TestEventLoopAsynchronousException()
+    {
+        var expectedError = "This is the expected error message";
+        var loop = new EventLoop();
+        loop.Invoke(
+            async () => {
                 await Task.Yield();
                 throw new Exception(expectedError);
             });
-            try
-            {
-                await loop.Start();
-                Assert.Fail("An exception should have been thrown");
-            }
-            catch (Exception ex)
-            {
-                Assert.AreEqual(expectedError, ex.Clean().Single().Message);
-            }
+
+        try
+        {
+            await loop.Start();
+            Assert.Fail("An exception should have been thrown");
+        }
+        catch (Exception ex)
+        {
+            Assert.AreEqual(expectedError, ex.Clean().Single().Message);
         }
     }
 }

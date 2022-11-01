@@ -165,7 +165,7 @@ namespace ArgsTests.Templating
             AssertEqual(tokens, "Hi,", "my", "name", "is", "\"John", "Smith\"");
         }
 
-        private void AssertEqual(List<Token> tokens, params string[] expected)
+        private void AssertEqual(List<Token> tokens, params string?[] expected)
         {
             Assert.AreEqual(expected.Length, tokens.Count);
             for(int i = 0; i < tokens.Count; i++)

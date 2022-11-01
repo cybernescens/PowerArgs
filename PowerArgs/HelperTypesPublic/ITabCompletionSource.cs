@@ -15,7 +15,7 @@ namespace PowerArgs
         /// <param name="context">An object containing useful information about what the user has typed on the command line</param>
         /// <param name="completion">The variable that you should assign the completed string to if you find a match.</param>
         /// <returns>True if you completed the string, false otherwise.</returns>
-        bool TryComplete(TabCompletionContext context, out string completion);
+        bool TryComplete(TabCompletionContext context, out string? completion);
     }
 
     /// <summary>
@@ -31,12 +31,12 @@ namespace PowerArgs
         /// <summary>
         /// Gets the token that comes before the completion candidate on the command line
         /// </summary>
-        public string PreviousToken { get; internal set; }
+        public string? PreviousToken { get; internal set; }
 
         /// <summary>
         /// Gets the full and current state of the command line text
         /// </summary>
-        public string CommandLineText { get; internal set; }
+        public string? CommandLineText { get; internal set; }
 
         /// <summary>
         /// Gets the position of the cursor within the current command line
@@ -46,7 +46,7 @@ namespace PowerArgs
         /// <summary>
         /// Gets the token that is being considered for tab completion
         /// </summary>
-        public string CompletionCandidate { get; internal set; }
+        public string? CompletionCandidate { get; internal set; }
 
         /// <summary>
         /// Gets the current command line argument that is being targeted based on the current state of the command line

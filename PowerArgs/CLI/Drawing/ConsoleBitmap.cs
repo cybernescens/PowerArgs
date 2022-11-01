@@ -1,203 +1,182 @@
-﻿using PowerArgs.Cli.Physics;
-using System.Drawing;
+﻿using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Drawing.Text;
 using System.Runtime.CompilerServices;
+using Microsoft.Toolkit.HighPerformance;
+using PowerArgs.Cli.Physics;
 
 namespace PowerArgs.Cli;
+
 /// <summary>
-/// A data structure representing a 2d image that can be pained in
-/// a console window
+///     A data structure representing a 2d image that can be pained in
+///     a console window
 /// </summary>
 public class ConsoleBitmap
 {
-    private static ChunkPool chunkPool = new ChunkPool();
-    private static List<Chunk> chunksOnLine = new List<Chunk>();
-    private static PaintBuffer paintBuilder = new PaintBuffer();
-
-
     // larger is faster, but may cause gaps
     private const float DrawPrecision = .5f;
+    private static readonly ChunkPool chunkPool = new();
+    private static readonly List<Chunk> chunksOnLine = new();
+    private static readonly PaintBuffer paintBuilder = new();
 
-    /// <summary>
-    /// The width of the image, in number of character pixels
-    /// </summary>
-    public int Width { get; private set; }
+    internal static ThreadLocal<Point[]> LineBuffer = new(() => new Point[1000]);
 
-    /// <summary>
-    /// The height of the image, in number of character pixels
-    /// </summary>
-    public int Height { get; private set; }
-
-    /// <summary>
-    /// The console to target when the Paint method is called 
-    /// </summary>
-    public IConsoleProvider Console { get; set; }
-
-    public ConsoleCharacter[][] Pixels;
-    private ConsoleCharacter[][] lastDrawnPixels;
-
+    private Size bounds;
     private int lastBufferWidth;
+    private ConsoleCharacter[,] lastDrawnPixels;
+    private ConsoleCharacter[,] pixels;
 
+    private bool wasFancy;
+
+    public ConsoleCharacter[,] Pixels => pixels;
 
     /// <summary>
-    /// Creates a new ConsoleBitmap
+    ///     Creates a new ConsoleBitmap
     /// </summary>
     /// <param name="w">the width of the image</param>
     /// <param name="h">the height of the image</param>
     public ConsoleBitmap(int w, int h) : this(new Size(w, h)) { }
 
     /// <summary>
-    /// Creates a new ConsoleBitmap
+    ///     Creates a new ConsoleBitmap
     /// </summary>
     /// <param name="bounds">the area of the image</param>
     public ConsoleBitmap(Size bounds)
     {
-        this.Width = bounds.Width;
-        this.Height = bounds.Height;
-        this.Console = ConsoleProvider.Current;
-        this.lastBufferWidth = this.Console.BufferWidth;
-        Pixels = new ConsoleCharacter[this.Width][];
-        lastDrawnPixels = new ConsoleCharacter[this.Width][];
-        for (int x = 0; x < this.Width; x++)
-        {
-            Pixels[x] = new ConsoleCharacter[this.Height];
-            lastDrawnPixels[x] = new ConsoleCharacter[this.Height];
-            for (int y = 0; y < Pixels[x].Length; y++)
-            {
-
-                Pixels[x][y] = new ConsoleCharacter(' ');
-                lastDrawnPixels[x][y] = new ConsoleCharacter(' ');
-            }
-        }
+        this.bounds = bounds;
+        Console = ConsoleProvider.Current;
+        lastBufferWidth = Console.BufferWidth;
+        pixels = new ConsoleCharacter[Width, Height];
+        lastDrawnPixels = new ConsoleCharacter[Width, Height];
+        Fill(ConsoleCharacter.Default);
     }
 
+    /// <summary>
+    ///    The width and height of the image, in number of character pixels for each
+    /// </summary>
+    public Size Bounds => bounds;
 
     /// <summary>
-    /// Converts this ConsoleBitmap to a ConsoleString
+    ///     The width of the image, in number of character pixels
     /// </summary>
-    /// <param name="trimMode">if false (the default), unformatted whitespace at the end of each line will be included as whitespace in the return value. If true, that whitespace will be trimmed from the return value.</param>
+    public int Width => bounds.Width;
+
+    /// <summary>
+    ///     The height of the image, in number of character pixels
+    /// </summary>
+    public int Height => bounds.Height;
+
+    /// <summary>
+    ///     The console to target when the Paint method is called
+    /// </summary>
+    public IConsoleProvider Console { get; set; }
+
+    /// <summary>
+    ///     Converts this ConsoleBitmap to a ConsoleString
+    /// </summary>
+    /// <param name="trimMode">
+    ///     if false (the default), unformatted whitespace at the end of each line will be included as
+    ///     whitespace in the return value. If true, that whitespace will be trimmed from the return value.
+    /// </param>
     /// <returns>the bitmap as a ConsoleString</returns>
     public ConsoleString ToConsoleString(bool trimMode = false)
     {
-        List<ConsoleCharacter> chars = new List<ConsoleCharacter>();
-        for (var y = 0; y < this.Height; y++)
+        var chars = new Stack<ConsoleCharacter>();
+       
+        for (var i = 0; i < Width * Height; i++)
         {
-            for (var x = 0; x < this.Width; x++)
+            var x = i % Width;
+            var y = i / Width;
+            var endOfLine = x == 0 && i > 0;
+
+            if (endOfLine)
             {
-                if (trimMode && IsRestOfLineWhitespaceWithDefaultBackground(x, y))
-                {
-                    break;
-                }
-                else
-                {
-                    var pixel = this.GetPixel(x, y);
-                    chars.Add(pixel);
-                }
+                while (trimMode && chars.Count > 0 && chars.Peek().Equals(ConsoleCharacter.Default))
+                    chars.Pop();
+
+                chars.Push(ConsoleCharacter.LineFeed);
             }
-            if (y < this.Height - 1)
-            {
-                chars.Add(new ConsoleCharacter('\n'));
-            }
+
+            chars.Push(pixels[x, y]);
         }
 
-        return new ConsoleString(chars);
-    }
+        while (trimMode && chars.Count > 0 && chars.Peek().Equals(ConsoleCharacter.Default))
+            chars.Pop();
 
-    private bool IsRestOfLineWhitespaceWithDefaultBackground(int xStart, int y)
-    {
-        var defaultBg = new ConsoleCharacter(' ').BackgroundColor;
-
-        for (var x = xStart; x < this.Width; x++)
-        {
-            if (char.IsWhiteSpace(this.GetPixel(x, y).Value) && this.GetPixel(x, y).BackgroundColor == defaultBg)
-            {
-                // this is whitespace
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return new ConsoleString(chars.Reverse());
     }
 
     /// <summary>
-    /// Resizes this image, preserving the data in the pixels that remain in the new area
+    ///     Resizes this image, preserving the data in the pixels that remain in the new area
     /// </summary>
     /// <param name="w">the new width</param>
     /// <param name="h">the new height</param>
     public void Resize(int w, int h)
     {
-        if (w == Width && h == Height) return;
+        if (w == Width && h == Height) 
+            return;
 
-     
-        var newPixels = new ConsoleCharacter[w][];
-        var newLastDrawnCharacters = new ConsoleCharacter[w][];
-        for (int x = 0; x < w; x++)
-        {
-            newPixels[x] = new ConsoleCharacter[h];
-            newLastDrawnCharacters[x] = new ConsoleCharacter[h];
-            for (int y = 0; y < newPixels[x].Length; y++)
-            {
-                newPixels[x][y] = new ConsoleCharacter(' ');
-                newLastDrawnCharacters[x][y] = new ConsoleCharacter(' ');
-            }
-        }
+        var newPixels = new ConsoleCharacter[w, h];
+        var newLastDrawnCharacters = new ConsoleCharacter[w, h];
 
-        Pixels = newPixels;
+        pixels = newPixels;
         lastDrawnPixels = newLastDrawnCharacters;
-        this.Width = w;
-        this.Height = h;
-        this.Invalidate();
+        bounds = new Size(w, h);
+        Invalidate();
     }
 
     /// <summary>
-    /// Gets the pixel at the given location
+    ///     Gets the pixel at the given location
     /// </summary>
     /// <param name="x">the x coordinate</param>
     /// <param name="y">the y coordinate</param>
     /// <returns>the pixel at the given location</returns>
-    public ConsoleCharacter GetPixel(int x, int y)
-    {
-        return Pixels[x][y];
-    }
+    public ConsoleCharacter GetPixel(int x, int y) => pixels[x, y];
 
-    public void SetPixel(int x, int y, in ConsoleCharacter c)
-    {
-        Pixels[x][y] = c;
-    }
+    public void SetPixel(int x, int y, in ConsoleCharacter c) { pixels[x, y] = c; }
+
+    //private static void Initialize(out ConsoleCharacter[,] plane, int width, int height, ConsoleCharacter pen = default)
+    //{
+    //    var memory = plane.AsSpan2D();
+
+    //    for (var i = 0; i < width * height; i++)
+    //    {
+    //        var x = i % width;
+    //        var y = i / height;
+    //        memory[x, y] = pen;
+    //    }
+
+    //    plane = memory;
+    //}
 
     /// <summary>
-    /// Creates a snapshot of the cursor position
+    ///     Creates a snapshot of the cursor position
     /// </summary>
-    /// <returns>a snapshot of the cursor positon</returns>
+    /// <returns>a snapshot of the cursor position</returns>
     public ConsoleSnapshot CreateSnapshot()
     {
         var snapshot = new ConsoleSnapshot(0, 0, Console);
         return snapshot;
     }
 
-    public bool IsInBounds(int x, int y)
-    {
-        return x >= 0 && x < Width && y >= 0 && y < Height;
-    }
+    public bool IsInBounds(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
 
     /// <summary>
-    /// Draws the given string onto the bitmap
+    ///     Draws the given string onto the bitmap
     /// </summary>
     /// <param name="str">the value to write</param>
     /// <param name="x">the x coordinate to draw the string's fist character</param>
     /// <param name="y">the y coordinate to draw the string's first character </param>
     /// <param name="vert">if true, draw vertically, else draw horizontally</param>
-    public void DrawString(string str, int x, int y, bool vert = false)
+    public void DrawString(string? str, int x, int y, bool vert = false)
     {
         DrawString(new ConsoleString(str), x, y, vert);
     }
 
     /// <summary>
-    /// Draws a filled in rectangle bounded by the given coordinates
-    /// using the current pen
+    ///     Draws a filled in rectangle bounded by the given coordinates
+    ///     using the current pen
     /// </summary>
     /// <param name="x">the left of the rectangle</param>
     /// <param name="y">the top of the rectangle</param>
@@ -211,38 +190,36 @@ public class ConsoleBitmap
         var minX = Math.Max(x, 0);
         var minY = Math.Max(y, 0);
 
+        var memory = pixels.AsSpan2D();
 
-        Span<ConsoleCharacter[]> xSpan = Pixels.AsSpan().Slice(minX, maxX - minX);
-
-        for (int xd = 0; xd < xSpan.Length; xd++)
+        for (var i = minY * minX + minX; i < maxX * maxY; i++)
         {
-            var ySpan = xSpan[xd].AsSpan(minY, maxY - minY);
-            for (var yd = 0; yd < ySpan.Length; yd++)
-            {
-                ySpan[yd] = pen;
-            }
+            var xx = i % maxX;
+            var yy = i / maxX;
+            memory[xx, yy] = pen;
         }
     }
-    public void FillRect(in RGB color, int x, int y, int w, int h) => FillRect(new ConsoleCharacter(' ', backgroundColor: color),x,y,w,h);
+
+    public void FillRect(in RGB color, int x, int y, int w, int h) =>
+        FillRect(new ConsoleCharacter(' ', backgroundColor: color), x, y, w, h);
 
     public void Fill(in RGB color) => Fill(new ConsoleCharacter(' ', backgroundColor: color));
+
     public void Fill(in ConsoleCharacter pen)
     {
-        Span<ConsoleCharacter[]> xSpan = Pixels.AsSpan();
+        var memory = pixels.AsSpan2D();
 
-        for (int xd = 0; xd < xSpan.Length; xd++)
+        for (var i = 0; i < Width * Height; i++)
         {
-            var ySpan = xSpan[xd].AsSpan();
-            for (var yd = 0; yd < ySpan.Length; yd++)
-            {
-                ySpan[yd] = pen;
-            }
+            var x = i % Width;
+            var y = i / Width;
+            memory[x, y] = pen;
         }
     }
 
     /// <summary>
-    /// Draws a filled in rectangle bounded by the given coordinates
-    /// using the current pen, without performing bounds checks
+    ///     Draws a filled in rectangle bounded by the given coordinates
+    ///     using the current pen, without performing bounds checks
     /// </summary>
     /// <param name="x">the left of the rectangle</param>
     /// <param name="y">the top of the rectangle</param>
@@ -253,21 +230,19 @@ public class ConsoleBitmap
         var maxX = x + w;
         var maxY = y + h;
 
-        Span<ConsoleCharacter[]> xSpan = Pixels.AsSpan().Slice(x, maxX - x);
+        //var memory = pixels.AsSpan2D();
 
-        for (int xd = 0; xd < xSpan.Length; xd++)
+        for (var i = x * y + x; i < maxX * maxY; i++)
         {
-            var ySpan = xSpan[xd].AsSpan(y, maxY - y);
-            for (var yd = 0; yd < ySpan.Length; yd++)
-            {
-                ySpan[yd] = pen;
-            }
+            var xx = i % Width;
+            var yy = i / Width;
+            pixels[xx, yy] = pen;
         }
     }
 
     /// <summary>
-    /// Draws an unfilled in rectangle bounded by the given coordinates
-    /// using the current pen
+    ///     Draws an unfilled in rectangle bounded by the given coordinates
+    ///     using the current pen
     /// </summary>
     /// <param name="x">the left of the rectangle</param>
     /// <param name="y">the top of the rectangle</param>
@@ -280,37 +255,25 @@ public class ConsoleBitmap
         var minX = Math.Max(x, 0);
         var minY = Math.Max(y, 0);
 
-        var xEndIndex = maxX - 1;
-        var yEndIndex = maxY - 1;
-
         // left vertical line
         for (var yd = minY; yd < maxY; yd++)
-        {
-            Pixels[minX][yd] = pen;
-        }
+            pixels[minX, yd] = pen;
 
         // right vertical line
         for (var yd = minY; yd < maxY; yd++)
-        {
-            Pixels[xEndIndex][yd] = pen;
-        }
+            pixels[maxX, yd] = pen;
 
-        var xSpan = Pixels.AsSpan(minX, maxX - minX);
         // top horizontal line
-        for (int xd = 0; xd < xSpan.Length; xd++)
-        {
-            xSpan[xd][minY] = pen;
-        }
+        for (var xd = minX; xd < maxX; xd++)
+            pixels[xd, minY] = pen;
 
         // bottom horizontal line
-        for (int xd = 0; xd < xSpan.Length; xd++)
-        {
-            xSpan[xd][yEndIndex] = pen;
-        }
+        for (var xd = minX; xd < maxX; xd++)
+            pixels[xd, maxY] = pen;
     }
 
     /// <summary>
-    /// Draws the given string onto the bitmap
+    ///     Draws the given string onto the bitmap
     /// </summary>
     /// <param name="str">the value to write</param>
     /// <param name="x">the x coordinate to draw the string's fist character</param>
@@ -320,7 +283,7 @@ public class ConsoleBitmap
     {
         var xStart = x;
         var span = str.AsSpan();
-        for(var i = 0; i < span.Length; i++)
+        for (var i = 0; i < span.Length; i++)
         {
             var character = span[i];
             if (character.Value == '\n')
@@ -334,16 +297,21 @@ public class ConsoleBitmap
             }
             else if (IsInBounds(x, y))
             {
-
-                Pixels[x][y] = character;
-                if (vert) y++;
-                else x++;
+                pixels[x, y] = character;
+                if (vert)
+                {
+                    y++;
+                }
+                else
+                {
+                    x++;
+                }
             }
         }
     }
 
     /// <summary>
-    /// Draw a single pixel value at the given point using the current pen
+    ///     Draw a single pixel value at the given point using the current pen
     /// </summary>
     /// <param name="x">the x coordinate</param>
     /// <param name="y">the y coordinate</param>
@@ -351,15 +319,12 @@ public class ConsoleBitmap
     {
         if (IsInBounds(x, y))
         {
-            Pixels[x][y] = pen;
+            pixels[x, y] = pen;
         }
     }
 
-    [ThreadStatic]
-    internal static Point[] LineBuffer;
-
     /// <summary>
-    /// Draw a line segment between the given points
+    ///     Draw a line segment between the given points
     /// </summary>
     /// <param name="x1">the x coordinate of the first point</param>
     /// <param name="y1">the y coordinate of the first point</param>
@@ -367,57 +332,52 @@ public class ConsoleBitmap
     /// <param name="y2">the y coordinate of the second point</param>
     public void DrawLine(in ConsoleCharacter pen, int x1, int y1, int x2, int y2)
     {
-        var len = DefineLineBuffered(x1, y1, x2, y2);
-        Point point;
+        var len = DefineLineBuffered(x1, y1, x2, y2, out var buffer);
+
         for (var i = 0; i < len; i++)
         {
-            point = LineBuffer[i];
+            var point = buffer[i];
             if (IsInBounds(point.X, point.Y))
             {
-                Pixels[point.X][point.Y] = pen;
+                pixels[point.X, point.Y] = pen;
             }
         }
     }
 
-    public static int DefineLineBuffered(int x1, int y1, int x2, int y2, Point[] buffer = null)
+    public static int DefineLineBuffered(int x1, int y1, int x2, int y2, out Point[] buffer)
     {
-        LineBuffer = LineBuffer ?? new Point[10000];
-        buffer = buffer ?? LineBuffer;
+        buffer = LineBuffer.Value!;
 
         var ret = 0;
         if (x1 == x2)
         {
-            int yMin = y1 >= y2 ? y2 : y1;
-            int yMax = y1 >= y2 ? y1 : y2;
-            for (int y = yMin; y < yMax; y++)
-            {
+            var yMin = Math.Min(y1, y2);
+            var yMax = Math.Max(y1, y2);
+            for (var y = yMin; y < yMax; y++)
                 buffer[ret++] = new Point(x1, y);
-            }
         }
         else if (y1 == y2)
         {
-            int xMin = x1 >= x2 ? x2 : x1;
-            int xMax = x1 >= x2 ? x1 : x2;
-            for (int x = xMin; x < xMax; x++)
-            {
+            var xMin = Math.Min(x1, x2);
+            var xMax = Math.Max(x1, x2);
+            for (var x = xMin; x < xMax; x++)
                 buffer[ret++] = new Point(x, y1);
-            }
         }
         else
         {
-            float slope = ((float)y2 - y1) / ((float)x2 - x1);
+            var slope = ((float)y2 - y1) / ((float)x2 - x1);
 
-            int dx = Math.Abs(x1 - x2);
-            int dy = Math.Abs(y1 - y2);
+            var dx = Math.Abs(x1 - x2);
+            var dy = Math.Abs(y1 - y2);
 
-            Point last = new Point();
+            var last = new Point();
             if (dy > dx)
             {
                 for (float x = x1; x < x2; x += DrawPrecision)
                 {
-                    float y = slope + (x - x1) + y1;
-                    int xInt = ConsoleMath.Round(x);
-                    int yInt = ConsoleMath.Round(y);
+                    var y = slope + (x - x1) + y1;
+                    var xInt = ConsoleMath.Round(x);
+                    var yInt = ConsoleMath.Round(y);
                     var p = new Point(xInt, yInt);
                     if (p.Equals(last) == false)
                     {
@@ -428,9 +388,9 @@ public class ConsoleBitmap
 
                 for (float x = x2; x < x1; x += DrawPrecision)
                 {
-                    float y = slope + (x - x1) + y1;
-                    int xInt = ConsoleMath.Round(x);
-                    int yInt = ConsoleMath.Round(y);
+                    var y = slope + (x - x1) + y1;
+                    var xInt = ConsoleMath.Round(x);
+                    var yInt = ConsoleMath.Round(y);
                     var p = new Point(xInt, yInt);
                     if (p.Equals(last) == false)
                     {
@@ -443,9 +403,9 @@ public class ConsoleBitmap
             {
                 for (float y = y1; y < y2; y += DrawPrecision)
                 {
-                    float x = ((y - y1) / slope) + x1;
-                    int xInt = ConsoleMath.Round(x);
-                    int yInt = ConsoleMath.Round(y);
+                    var x = (y - y1) / slope + x1;
+                    var xInt = ConsoleMath.Round(x);
+                    var yInt = ConsoleMath.Round(y);
                     var p = new Point(xInt, yInt);
                     if (p.Equals(last) == false)
                     {
@@ -456,9 +416,9 @@ public class ConsoleBitmap
 
                 for (float y = y2; y < y1; y += DrawPrecision)
                 {
-                    float x = ((y - y1) / slope) + x1;
-                    int xInt = ConsoleMath.Round(x);
-                    int yInt = ConsoleMath.Round(y);
+                    var x = (y - y1) / slope + x1;
+                    var xInt = ConsoleMath.Round(x);
+                    var yInt = ConsoleMath.Round(y);
                     var p = new Point(xInt, yInt);
                     if (p.Equals(last) == false)
                     {
@@ -473,29 +433,31 @@ public class ConsoleBitmap
     }
 
     /// <summary>
-    /// Makes a copy of this bitmap
+    ///     Makes a copy of this bitmap
     /// </summary>
     /// <returns>a copy of this bitmap</returns>
     public ConsoleBitmap Clone()
     {
         var ret = new ConsoleBitmap(Width, Height);
-        for (var x = 0; x < Width; x++)
+        for (var i = 0; i < Width * Height; i++)
         {
-            for (var y = 0; y < Height; y++)
-            {
-                ret.Pixels[x][y] = Pixels[x][y];
-            }
+            var x = i % Width;
+            var y = i / Width;
+            ret.pixels[x, y] = new ConsoleCharacter(
+                pixels[x, y].Value,
+                pixels[x, y].ForegroundColor,
+                pixels[x, y].BackgroundColor,
+                pixels[x, y].IsUnderlined);
         }
+
         return ret;
     }
-       
 
-    private bool wasFancy;
     public void Paint()
     {
         if (ConsoleProvider.Fancy != wasFancy)
         {
-            this.Invalidate();
+            Invalidate();
             wasFancy = ConsoleProvider.Fancy;
 
             if (ConsoleProvider.Fancy)
@@ -515,42 +477,38 @@ public class ConsoleBitmap
     }
 
     /// <summary>
-    /// Paints this image to the current Console
+    ///     Paints this image to the current Console
     /// </summary>
     public void PaintOld()
     {
         if (Console.WindowHeight == 0) return;
 
         var changed = false;
-        if (lastBufferWidth != this.Console.BufferWidth)
+        if (lastBufferWidth != Console.BufferWidth)
         {
-            lastBufferWidth = this.Console.BufferWidth;
+            lastBufferWidth = Console.BufferWidth;
             Invalidate();
-            this.Console.Clear();
+            Console.Clear();
             changed = true;
         }
+
         try
         {
-            Chunk currentChunk = null;
+            Chunk? currentChunk = null;
             var chunksOnLine = new List<Chunk>();
-            ConsoleCharacter pixel;
-            ConsoleCharacter lastDrawn;
-            char val;
-            RGB fg;
-            RGB bg;
-            bool pixelChanged;
-            for (int y = 0; y < Height; y++)
+            for (var y = 0; y < Height; y++)
             {
                 var changeOnLine = false;
-                for (int x = 0; x < Width; x++)
+                for (var x = 0; x < Width; x++)
                 {
-                    pixel = Pixels[x][y];
-                    lastDrawn = lastDrawnPixels[x][y];
-                    pixelChanged = pixel != lastDrawn;
+                    var pixel = pixels[x, y];
+                    var lastDrawn = lastDrawnPixels[x, y];
+                    var pixelChanged = pixel != lastDrawn;
                     changeOnLine = changeOnLine || pixelChanged;
-                    val = pixel.Value;
-                    fg = pixel.ForegroundColor;
-                    bg = pixel.BackgroundColor;
+                    var val = pixel.Value;
+                    var fg = pixel.ForegroundColor;
+                    var bg = pixel.BackgroundColor;
+
                     if (currentChunk == null)
                     {
                         // first pixel always gets added to the current empty chunk
@@ -581,10 +539,11 @@ public class ConsoleBitmap
                         currentChunk.HasChanged = pixelChanged;
                         currentChunk.Add(val);
                     }
-                    lastDrawnPixels[x][y] = pixel;
+
+                    lastDrawnPixels[x, y] = pixel;
                 }
 
-                if (currentChunk.Length > 0)
+                if (currentChunk?.Length > 0)
                 {
                     chunksOnLine.Add(currentChunk);
                 }
@@ -620,6 +579,7 @@ public class ConsoleBitmap
                         }
                     }
                 }
+
                 chunksOnLine.Clear();
             }
 
@@ -645,66 +605,64 @@ public class ConsoleBitmap
 
     public void Dump(string dest)
     {
-        using (Bitmap b = new Bitmap(Width * 10, Height * 20))
-        using (var g = Graphics.FromImage(b))
-        {
-            g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-            for (int y = 0; y < Height; y++)
-            {
-                for (int x = 0; x < Width; x++)
-                {
-                    var pix = GetPixel(x, y);
-                    var bgColor = Color.FromArgb(pix.BackgroundColor.R, pix.BackgroundColor.G, pix.BackgroundColor.B);
-                    var fgColor = Color.FromArgb(pix.ForegroundColor.R, pix.ForegroundColor.G, pix.ForegroundColor.B);
-                    var imgX = x * 10;
-                    var imgY = y * 20;
-                    g.FillRectangle(new SolidBrush(bgColor), imgX, imgY, 10, 20);
-                    g.DrawString(pix.Value.ToString(), new Font("Consolas", 12), new SolidBrush(fgColor), imgX-2, imgY);
-                }
-            }
-            b.Save(dest, ImageFormat.Png);
-        }
-    }
+        using var b = new Bitmap(Width * 10, Height * 20);
+        using var g = Graphics.FromImage(b);
 
+        g.CompositingQuality = CompositingQuality.HighQuality;
+        g.TextRenderingHint = TextRenderingHint.AntiAlias;
+
+        for (var y = 0; y < Height; y++)
+        {
+            for (var x = 0; x < Width; x++)
+            {
+                var pix = GetPixel(x, y);
+                var bgColor = Color.FromArgb(pix.BackgroundColor.R, pix.BackgroundColor.G, pix.BackgroundColor.B);
+                var fgColor = Color.FromArgb(pix.ForegroundColor.R, pix.ForegroundColor.G, pix.ForegroundColor.B);
+                var imgX = x * 10;
+                var imgY = y * 20;
+
+                g.FillRectangle(new SolidBrush(bgColor), imgX, imgY, 10, 20);
+                g.DrawString(
+                    pix.Value.ToString(),
+                    new Font("Consolas", 12),
+                    new SolidBrush(fgColor),
+                    imgX - 2,
+                    imgY);
+            }
+        }
+
+        b.Save(dest, ImageFormat.Png);
+    }
 
     public void PaintNew()
     {
         if (Console.WindowHeight == 0) return;
 
-        if (lastBufferWidth != this.Console.BufferWidth)
+        if (lastBufferWidth != Console.BufferWidth)
         {
-            lastBufferWidth = this.Console.BufferWidth;
+            lastBufferWidth = Console.BufferWidth;
             Invalidate();
-            this.Console.Clear();
+            Console.Clear();
         }
 
         try
         {
             paintBuilder.Clear();
-            Chunk currentChunk = null;
-            char val;
-            RGB fg;
-            RGB bg;
-            bool underlined;
-            ConsoleCharacter pixel;
-            ConsoleCharacter lastDrawn;
-            bool changeOnLine;
-            bool pixelChanged;
-            for (int y = 0; y < Height; y++)
+            Chunk? currentChunk = null;
+            for (var y = 0; y < Height; y++)
             {
-                changeOnLine = false;
-                for (int x = 0; x < Width; x++)
+                var changeOnLine = false;
+                for (var x = 0; x < Width; x++)
                 {
-                    pixel = Pixels[x][y];
-                    lastDrawn = lastDrawnPixels[x][y];
-                    pixelChanged = pixel != lastDrawn;
+                    var pixel = pixels[x, y];
+                    var lastDrawn = lastDrawnPixels[x, y];
+                    var pixelChanged = pixel != lastDrawn;
                     changeOnLine = changeOnLine || pixelChanged;
 
-                    val = pixel.Value;
-                    fg = pixel.ForegroundColor;
-                    bg = pixel.BackgroundColor;
-                    underlined = pixel.IsUnderlined;
+                    var val = pixel.Value;
+                    var fg = pixel.ForegroundColor;
+                    var bg = pixel.BackgroundColor;
+                    var underlined = pixel.IsUnderlined;
 
                     if (currentChunk == null)
                     {
@@ -721,7 +679,11 @@ public class ConsoleBitmap
                         // characters that have not changed get chunked even if their styles differ
                         currentChunk.Add(val);
                     }
-                    else if (currentChunk.HasChanged && pixelChanged && fg == currentChunk.FG && bg == currentChunk.BG && underlined == currentChunk.Underlined)
+                    else if (currentChunk.HasChanged &&
+                             pixelChanged &&
+                             fg == currentChunk.FG &&
+                             bg == currentChunk.BG &&
+                             underlined == currentChunk.Underlined)
                     {
                         // characters that have changed only get chunked if their styles match to minimize the number of writes
                         currentChunk.Add(val);
@@ -736,10 +698,11 @@ public class ConsoleBitmap
                         currentChunk.HasChanged = pixelChanged;
                         currentChunk.Add(val);
                     }
-                    lastDrawnPixels[x][y] = pixel;
+
+                    lastDrawnPixels[x, y] = pixel;
                 }
 
-                if (currentChunk.Length > 0)
+                if (currentChunk?.Length > 0)
                 {
                     chunksOnLine.Add(currentChunk);
                 }
@@ -754,7 +717,6 @@ public class ConsoleBitmap
                         var chunk = chunksOnLine[i];
                         if (chunk.HasChanged)
                         {
-
                             if (chunk.Underlined)
                             {
                                 paintBuilder.Append(Ansi.Text.UnderlinedOn);
@@ -774,13 +736,13 @@ public class ConsoleBitmap
                     }
                 }
 
-                foreach(var chunk in chunksOnLine)
-                {
+                foreach (var chunk in chunksOnLine)
                     chunkPool.Return(chunk);
-                }
+
                 chunksOnLine.Clear();
             }
-            Ansi.Cursor.Move.ToLocation(Width-1, Height-1, paintBuilder);
+
+            Ansi.Cursor.Move.ToLocation(Width - 1, Height - 1, paintBuilder);
             Console.Write(paintBuilder.Buffer, paintBuilder.Length);
         }
         catch (IOException)
@@ -796,49 +758,49 @@ public class ConsoleBitmap
     }
 
     /// <summary>
-    /// Clears the cached paint state of each pixel so that
-    /// all pixels will forcefully be painted the next time Paint
-    /// is called
+    ///     Clears the cached paint state of each pixel so that
+    ///     all pixels will forcefully be painted the next time Paint
+    ///     is called
     /// </summary>
     public void Invalidate()
     {
-        for (int y = 0; y < Height; y++)
+        for (var y = 0; y < Height; y++)
+        for (var x = 0; x < Width; x++)
         {
-            for (int x = 0; x < Width; x++)
-            {
-                lastDrawnPixels[x][y] = default;
-            }
+            lastDrawnPixels[x, y] = default;
         }
     }
 
     /// <summary>
-    /// Gets a string representation of this image 
+    ///     Gets a string representation of this image
     /// </summary>
     /// <returns>a string representation of this image</returns>
-    public override string ToString() => ToConsoleString().ToString();
+    public override string? ToString() => ToConsoleString().ToString();
 
     /// <summary>
-    /// Returns true if the given object is a ConsoleBitmap with
-    /// equivalent values as this bitmap, false otherwise
+    ///     Returns true if the given object is a ConsoleBitmap with
+    ///     equivalent values as this bitmap, false otherwise
     /// </summary>
     /// <param name="obj">the object to compare</param>
-    /// <returns>true if the given object is a ConsoleBitmap with
-    /// equivalent values as this bitmap, false otherwise</returns>
-    public override bool Equals(Object obj)
+    /// <returns>
+    ///     true if the given object is a ConsoleBitmap with
+    ///     equivalent values as this bitmap, false otherwise
+    /// </returns>
+    public override bool Equals(object? obj)
     {
         var other = obj as ConsoleBitmap;
         if (other == null) return false;
 
-        if (this.Width != other.Width || this.Height != other.Height)
+        if (Width != other.Width || Height != other.Height)
         {
             return false;
         }
 
-        for (var x = 0; x < this.Width; x++)
+        for (var x = 0; x < Width; x++)
         {
-            for (var y = 0; y < this.Height; y++)
+            for (var y = 0; y < Height; y++)
             {
-                var thisVal = this.GetPixel(x, y).Value;
+                var thisVal = GetPixel(x, y).Value;
                 var otherVal = other.GetPixel(x, y).Value;
                 if (thisVal != otherVal) return false;
             }
@@ -848,29 +810,24 @@ public class ConsoleBitmap
     }
 
     /// <summary>
-    /// Gets a hashcode for this bitmap
+    ///     Gets a hashcode for this bitmap
     /// </summary>
     /// <returns></returns>
-    public override int GetHashCode()
-    {
-        return base.GetHashCode();
-    }
+    public override int GetHashCode() => base.GetHashCode();
 }
-
 
 internal class Chunk
 {
-    public RGB FG;
     public RGB BG;
+    public readonly char[] buffer;
+    public RGB FG;
     public bool HasChanged;
     public short Length;
-    public char[] buffer;
     public bool Underlined;
+
+    public Chunk(int maxWidth) { buffer = new char[maxWidth]; }
+
     public int BufferLength => buffer.Length;
-    public Chunk(int maxWidth)
-    {
-        buffer = new char[maxWidth];
-    }
 
     public void Clear()
     {
@@ -882,12 +839,12 @@ internal class Chunk
     }
 
     public void Add(char c) => buffer[Length++] = c;
-    public override string ToString() => new string(buffer, 0, Length);
+    public override string? ToString() => new(buffer, 0, Length);
 }
 
 internal class PaintBuffer
 {
-    public char[] Buffer = new char[120*80];
+    public char[] Buffer = new char[120 * 80];
     public int Length;
 
     internal void Append(Chunk c)
@@ -896,9 +853,7 @@ internal class PaintBuffer
 
         var span = c.buffer.AsSpan();
         for (var i = 0; i < c.Length; i++)
-        {
             Buffer[Length++] = span[i];
-        }
     }
 
     public void Append(char c)
@@ -912,10 +867,8 @@ internal class PaintBuffer
         EnsureBigEnough(Length + chars.Length);
 
         var span = chars.AsSpan();
-        for(var i = 0; i < span.Length; i++)
-        {
-            Buffer[Length++]=span[i];
-        }
+        for (var i = 0; i < span.Length; i++)
+            Buffer[Length++] = span[i];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -930,39 +883,34 @@ internal class PaintBuffer
         }
     }
 
-    public void Clear()
-    {
-        Length = 0;
-    }
+    public void Clear() { Length = 0; }
 }
 
 internal class ChunkPool
 {
-    Dictionary<int, List<Chunk>> pool = new Dictionary<int, List<Chunk>>();
+    private readonly Dictionary<int, List<Chunk>> pool = new();
+
     public Chunk Get(int w)
     {
-        if(pool.TryGetValue(w, out List<Chunk> chunks) == false || chunks.None())
+        if (pool.TryGetValue(w, out var chunks) == false || chunks.None())
         {
             return new Chunk(w);
         }
-        else
-        {
-            var ret = chunks[0];
-            chunks.RemoveAt(0);
-            return ret;
-        }
+
+        var ret = chunks[0];
+        chunks.RemoveAt(0);
+        return ret;
     }
 
     public void Return(Chunk obj)
     {
-        if (pool.TryGetValue(obj.BufferLength, out List<Chunk> chunks) == false)
+        if (pool.TryGetValue(obj.BufferLength, out var chunks) == false)
         {
             chunks = new List<Chunk>();
             pool.Add(obj.BufferLength, chunks);
         }
+
         obj.Clear();
         chunks.Add(obj);
     }
 }
-
- 

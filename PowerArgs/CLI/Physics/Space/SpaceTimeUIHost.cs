@@ -12,7 +12,7 @@ namespace PowerArgs.Cli.Physics
         float Width { get; }
         float Height { get; }
         void UpdateBounds(SpacialElement e, float x, float y, int z, float w, float h);
-        SpaceTime SpaceTime { get; }
+        SpaceTime? SpaceTime { get; }
         RealTimeViewingFunction RealTimeViewing { get; set; }
         Event AfterUpdate { get; }
         LocF CameraTopLeft { get; set; }
@@ -22,21 +22,21 @@ namespace PowerArgs.Cli.Physics
     {
         private AutoResetEvent resetHandle;
         private bool resizedSinceLastRender;
-        private ISpaceTimeUI ui;
+        private ISpaceTimeUI? ui;
         private LocF lastCamera;
-        public SpaceTimeUIHost(ISpaceTimeUI ui)
+        public SpaceTimeUIHost(ISpaceTimeUI? ui)
         {
             this.ui = ui;
             resetHandle = new AutoResetEvent(false);
             ui.SpaceTime.Invoke(() =>
             {
                 ui.RealTimeViewing = new RealTimeViewingFunction(ui.SpaceTime) { Enabled = true };
-                ui.SpaceTime.EndOfCycle.SubscribeForLifetime(() => UpdateViewInternal(), ui);
+                ui.SpaceTime.EndOfCycle.SubscribeForLifetime(ui, () => UpdateViewInternal());
             });
 
             ui.OnDisposed(() => resetHandle.Set());
 
-            ui.SizeChanged.SubscribeForLifetime(() => resizedSinceLastRender = true, ui);
+            ui.SizeChanged.SubscribeForLifetime(ui, () => resizedSinceLastRender = true);
         }
 
        

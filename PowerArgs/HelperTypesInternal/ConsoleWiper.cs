@@ -9,7 +9,7 @@ namespace PowerArgs
         public int Left { get; set; }
         public int Bottom { get; set; }
 
-        private ConsoleString clearedLine;
+        private ConsoleString? clearedLine;
 
         private IConsoleProvider _console;
         public IConsoleProvider Console

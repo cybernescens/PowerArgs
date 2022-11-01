@@ -37,7 +37,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">The data context used to find the named template and to evaluate the data expression</param>
         /// <returns>The rendered child document to be inserted into the parent document</returns>
-        public ConsoleString Evaluate(DocumentRendererContext context)
+        public ConsoleString? Evaluate(DocumentRendererContext context)
         {
             DocumentTemplateInfo target = context.DocumentRenderer.GetTemplate(this.IdToken);
             var eval = context.EvaluateExpression(this.EvalToken.Value);

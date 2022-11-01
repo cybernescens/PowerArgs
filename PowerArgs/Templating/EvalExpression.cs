@@ -88,7 +88,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">The datta context to evaluate against</param>
         /// <returns>The result of the evaluation as a ConsoleString</returns>
-        public ConsoleString Evaluate(DocumentRendererContext context)
+        public ConsoleString? Evaluate(DocumentRendererContext context)
         {
             context.LocalVariables.PushConsoleColors(FG, BG);
             try

@@ -160,7 +160,7 @@ namespace ArgsTests
         {
             try
             {
-                Args.Parse<NoReviverArgs>(new string[0]);
+                Args.Parse<NoReviverArgs>(new string?[0]);
                 Assert.Fail("An exception should have been thrown");
             }
             catch (InvalidArgDefinitionException ex)
@@ -217,9 +217,9 @@ namespace ArgsTests
         }
 
 
-        public void TestBadValues(string shortcut, string variation)
+        public void TestBadValues(string shortcut, string? variation)
         {
-            var args = new string[] 
+            var args = new string?[] 
             { 
                 "-s", "stringValue", 
                 "-i", "34", 
@@ -260,7 +260,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { "-" };
+                var args = new string?[] { "-" };
                 var parsed = Args.Parse<BasicArgs>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -275,7 +275,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { "/" };
+                var args = new string?[] { "/" };
                 var parsed = Args.Parse<BasicArgsSC>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -290,7 +290,7 @@ namespace ArgsTests
         {
             Helpers.Run(() =>
             {
-                var args = "-li ,".Split(' ');
+                string?[] args = "-li ,".Split(' ');
                 var parsed = Args.Parse<BasicArgs>(args);
             }, Helpers.ExpectedArgException());
         }
@@ -300,7 +300,7 @@ namespace ArgsTests
         {
             Helpers.Run(() =>
             {
-                var args = "-a ".Split(' ');
+                string?[] args = "-a ".Split(' ');
                 var parsed = Args.Parse<BasicArgs>(args);
                 Assert.IsNotNull(parsed.ArrayOfStrings);
                 Assert.AreEqual(0, parsed.ArrayOfStrings.Length);
@@ -312,7 +312,7 @@ namespace ArgsTests
         {
             Helpers.Run(() =>
             {
-                var args = "-a ,".Split(' ');
+                string?[] args = "-a ,".Split(' ');
                 var parsed = Args.Parse<BasicArgs>(args);
                 Assert.IsNotNull(parsed.ArrayOfStrings);
                 Assert.AreEqual(2, parsed.ArrayOfStrings.Length);

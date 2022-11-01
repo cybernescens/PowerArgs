@@ -82,7 +82,7 @@ namespace PowerArgs
         /// <param name="context">Context from the parent reader</param>
         /// <param name="selection">The selection string to insert</param>
         /// <returns>a result that replaces the current token with the given selection</returns>
-        public static ContextAssistResult CreateInsertResult(RichCommandLineContext context, ConsoleString selection)
+        public static ContextAssistResult CreateInsertResult(RichCommandLineContext context, ConsoleString? selection)
         {
             context.RefreshTokenInfo();
             var ret = new ContextAssistResult();

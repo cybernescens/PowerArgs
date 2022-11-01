@@ -16,7 +16,7 @@ namespace ArgsTests
         public void TestEmptyModel()
         {
             CommandLineArgumentsDefinition definition = new CommandLineArgumentsDefinition();
-            Args.Parse(definition, new string[0]);
+            Args.Parse(definition, new string?[0]);
         }
 
         [TestMethod]
@@ -28,11 +28,11 @@ namespace ArgsTests
 
             var argumentString = argument.ToString(); // Make sure it doesn't throw
 
-            Args.Parse(definition, new string[] { "-somenumber", "100" });
+            Args.Parse(definition, new string?[] { "-somenumber", "100" });
             Assert.AreEqual(100, definition.Arguments[0].RevivedValue);
             
             definition.Arguments[0].RevivedValue = null;
-            Args.Parse(definition, new string[] { "/somenumber:100" });
+            Args.Parse(definition, new string?[] { "/somenumber:100" });
             Assert.AreEqual(100, definition.Arguments[0].RevivedValue);
         }
 
@@ -49,7 +49,7 @@ namespace ArgsTests
 
             try
             {
-                Args.Parse(definition, new string[] { });
+                Args.Parse(definition, new string?[] { });
                 Assert.Fail("An exception should have been thrown");
             }
             catch (MissingArgException ex)

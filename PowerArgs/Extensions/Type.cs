@@ -18,7 +18,7 @@ namespace PowerArgs
             return ret;
         }
 
-        internal static bool TryMatchEnumShortcut(this Type enumType, string value, bool ignoreCase, out object enumResult)
+        internal static bool TryMatchEnumShortcut(this Type enumType, string? value, bool ignoreCase, out object enumResult)
         {
             if (ignoreCase) value = value.ToLower();
             foreach (var field in enumType.GetFields().Where(f => f.IsSpecialName == false))

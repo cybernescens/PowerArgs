@@ -33,7 +33,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">The data context to use for evaluation</param>
         /// <returns>The rendered plain text</returns>
-        public ConsoleString Evaluate(DocumentRendererContext context)
+        public ConsoleString? Evaluate(DocumentRendererContext context)
         {
             var ret = new ConsoleString();
 

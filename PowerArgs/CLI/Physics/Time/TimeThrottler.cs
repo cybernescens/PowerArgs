@@ -8,10 +8,10 @@ namespace PowerArgs.Cli.Physics
         private Action innerAction;
         private int iterationsThisTick;
 
-        public TimeThrottler(Action innerAction, ILifetimeManager lt)
+        public TimeThrottler(Action innerAction, ILifetimeManager? lt)
         {
             this.innerAction = innerAction;
-            Time.CurrentTime.EndOfCycle.SubscribeForLifetime(() => iterationsThisTick = 0, lt);
+            Time.CurrentTime.EndOfCycle.SubscribeForLifetime(lt, () => iterationsThisTick = 0);
             lt.OnDisposed(this.Dispose);
         }
 

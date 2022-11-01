@@ -88,7 +88,7 @@ namespace PowerArgs
         }
 
      
-        internal string Syntax
+        internal string? Syntax
         {
             get
             {
@@ -236,7 +236,7 @@ namespace PowerArgs
         /// <summary>
         /// The default value for this argument in the event it is optional and the user did not specify it.
         /// </summary>
-        public object DefaultValue
+        public object? DefaultValue
         {
             get
             {
@@ -252,13 +252,13 @@ namespace PowerArgs
         /// Only works if the ArgumentType is an enum or a nullable where the value type is an enum.  Returns a list where each element is a string containing an
         /// enum value and optionally its description.  Each enum value is represented in the list.
         /// </summary>
-        public List<string> EnumValuesAndDescriptions
+        public List<string?> EnumValuesAndDescriptions
         {
             get
             {
                 if (IsEnum == false)
                 {
-                    return new List<string>();
+                    return new List<string?>();
                 }
 
                 var enumType = ArgumentType;
@@ -270,7 +270,7 @@ namespace PowerArgs
                 }
 
 
-                List<string> ret = new List<string>();
+                List<string?> ret = new List<string?>();
                 foreach (var val in enumType.GetFields().Where(v => v.IsSpecialName == false))
                 {
                     var description = val.HasAttr<ArgDescription>() ? " - " + val.Attr<ArgDescription>().Description : "";
@@ -284,7 +284,7 @@ namespace PowerArgs
         /// <summary>
         /// The description for this argument that appears in the auto generated usage.
         /// </summary>
-        public string Description
+        public string? Description
         {
             get
             {
@@ -330,7 +330,7 @@ namespace PowerArgs
         /// <summary>
         /// The first alias of this argument or null if no aliases are defined.
         /// </summary>
-        public string DefaultAlias
+        public string? DefaultAlias
         {
             get
             {
@@ -369,7 +369,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="value">the value to test</param>
         /// <returns>true if the value passes validation and is successfully revived, false otherwise</returns>
-        public bool TestIsValidAndRevivable(string value)
+        public bool TestIsValidAndRevivable(string? value)
         {
             try
             {
@@ -421,8 +421,20 @@ namespace PowerArgs
                 ret.IgnoreCase = false;
             }
 
+            
+            AliasConventionProvider aliasConverter = new NoOpAliasConverter();
 
-            ret.Aliases.AddRange(FindDefaultShortcuts(property, knownAliases, ret.IgnoreCase));
+            if (property.DeclaringType.HasAttr<ArgAliasConvention>())
+            {
+              aliasConverter = property.DeclaringType.Attr<ArgAliasConvention>().Provider;
+            }
+
+            if (property.HasAttr<ArgAliasConvention>())
+            {
+              aliasConverter = property.Attr<ArgAliasConvention>().Provider;
+            }
+
+            ret.Aliases.AddRange(FindDefaultShortcuts(property, knownAliases, ret.IgnoreCase, aliasConverter));
 
             // TODO - I think the first generic call can just be more specific
             ret.Metadata.AddRange(property.Attrs<IArgMetadata>().AssertAreAllInstanceOf<ICommandLineArgumentMetadata>());
@@ -486,7 +498,7 @@ namespace PowerArgs
             RunArgumentHook(context, h => h.AfterPopulatePropertyPriority, (h) => { h.AfterPopulateProperty(context); });
         }
 
-        internal void Validate(ref string commandLineValue)
+        internal void Validate(ref string? commandLineValue)
         {
             if (ArgumentType == typeof(SecureStringArgument) && Validators.Any())
             {
@@ -506,7 +518,7 @@ namespace PowerArgs
             }
         }
 
-        internal void Revive(string commandLineValue)
+        internal void Revive(string? commandLineValue)
         {
             if (ArgRevivers.CanRevive(ArgumentType) && commandLineValue != null)
             {
@@ -575,9 +587,9 @@ namespace PowerArgs
          * 
          * Rather than examine the aliases every time we'll remember the answer for a given property / key pair
          */ 
-        private static Dictionary<string, bool> matchMemo = new Dictionary<string, bool>();
+        private static Dictionary<string?, bool> matchMemo = new Dictionary<string?, bool>();
 
-        internal bool IsMatch(string key)
+        internal bool IsMatch(string? key)
         {
             bool ret = false;
             
@@ -660,7 +672,11 @@ namespace PowerArgs
             RunAfterPopulateProperty(context);
         }
 
-        internal static List<string> FindDefaultShortcuts(PropertyInfo info, List<string> knownShortcuts, bool ignoreCase)
+        internal static List<string> FindDefaultShortcuts(
+          PropertyInfo info,
+          List<string> knownShortcuts,
+          bool ignoreCase,
+          AliasConventionProvider aliasProvider)
         {
             List<string> ret = new List<string>();
 
@@ -669,15 +685,21 @@ namespace PowerArgs
 
             if (excludeName == false)
             {
-                knownShortcuts.Add(info.Name);
+                var n = aliasProvider.Convert(info.Name);
+                if (n != null)
+                    knownShortcuts.Add(n);
 
                 if (CommandLineAction.IsActionImplementation(info) && info.Name.EndsWith(Constants.ActionArgConventionSuffix))
                 {
-                    ret.Add(info.Name.Substring(0, info.Name.Length - Constants.ActionArgConventionSuffix.Length));
+                  var m = aliasProvider.Convert(info.Name.Substring(0, info.Name.Length - Constants.ActionArgConventionSuffix.Length));
+                  if (m != null)
+                      ret.Add(m);
                 }
                 else
                 {
-                    ret.Add(info.Name);
+                    var m = aliasProvider.Convert(info.Name);
+                    if (m != null)
+                        ret.Add(m);
                 }
             }
  

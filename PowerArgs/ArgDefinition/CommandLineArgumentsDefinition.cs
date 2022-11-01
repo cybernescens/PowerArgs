@@ -55,7 +55,7 @@ namespace PowerArgs
         /// <summary>
         /// An optional copyright field
         /// </summary>
-        public string Copyright
+        public string? Copyright
         {
             get
             {
@@ -70,7 +70,7 @@ namespace PowerArgs
         /// <summary>
         /// An optional product name field
         /// </summary>
-        public string ProductName
+        public string? ProductName
         {
             get
             {
@@ -85,7 +85,7 @@ namespace PowerArgs
         /// <summary>
         /// An optional product version field
         /// </summary>
-        public string ProductVersion
+        public string? ProductVersion
         {
             get
             {
@@ -352,7 +352,7 @@ namespace PowerArgs
         /// <summary>
         /// Determines how end user errors should be handled by the parser.  By default all exceptions flow through to your program.
         /// </summary>
-        public ArgExceptionBehavior ExceptionBehavior
+        public ArgExceptionBehavior? ExceptionBehavior
         {
             get
             {
@@ -404,13 +404,13 @@ namespace PowerArgs
         /// Gets any named arguments that were present on the command line, but did not match any arguments defined
         /// by the definition.  This is only valid if the AllowUnexpectedArgs metadata is present.
         /// </summary>
-        public Dictionary<string,string> UnexpectedExplicitArguments { get; internal set; }
+        public Dictionary<string?, string> UnexpectedExplicitArguments { get; internal set; }
 
         /// <summary>
         /// Gets any positional arguments that were present on the command line, but did not match any arguments defined
         /// by the definition.  This is only valid if the AllowUnexpectedArgs metadata is present.
         /// </summary>
-        public Dictionary<int, string> UnexpectedImplicitArguments { get; internal set; }
+        public Dictionary<int, string?> UnexpectedImplicitArguments { get; internal set; }
 
         /// <summary>
         /// Creates an empty command line arguments definition.
@@ -438,7 +438,7 @@ namespace PowerArgs
         /// <param name="key">The key as if it was typed in on the command line.  This can also be an alias. </param>
         /// <param name="throwIfMoreThanOneMatch">If set to true then this method will throw and InvalidArgDeginitionException if more than 1 match is found</param>
         /// <returns>The first argument that matches the key.</returns>
-        public CommandLineArgument FindMatchingArgument(string key, bool throwIfMoreThanOneMatch = false)
+        public CommandLineArgument FindMatchingArgument(string? key, bool throwIfMoreThanOneMatch = false)
         {
             return CommandLineArgumentsDefinition.FindMatchingArgument(key, throwIfMoreThanOneMatch, this.Arguments);
         }
@@ -449,7 +449,7 @@ namespace PowerArgs
         /// <param name="key">The key as if it was typed in on the command line.  This can also be an alias. </param>
         /// <param name="throwIfMoreThanOneMatch">If set to true then this method will throw and InvalidArgDeginitionException if more than 1 match is found</param>
         /// <returns>The first action that matches the key.</returns>
-        public CommandLineAction FindMatchingAction(string key, bool throwIfMoreThanOneMatch = false)
+        public CommandLineAction FindMatchingAction(string? key, bool throwIfMoreThanOneMatch = false)
         {
             var match = from a in Actions where a.IsMatch(key) select a;
             if (match.Count() > 1 && throwIfMoreThanOneMatch)
@@ -492,7 +492,7 @@ namespace PowerArgs
             });
         }
 
-        internal static CommandLineArgument FindMatchingArgument(string key, bool throwIfMoreThanOneMatch, IEnumerable<CommandLineArgument> searchSpace)
+        internal static CommandLineArgument FindMatchingArgument(string? key, bool throwIfMoreThanOneMatch, IEnumerable<CommandLineArgument> searchSpace)
         {
             var match = from a in searchSpace where a.IsMatch(key) select a;
             if (match.Count() > 1 && throwIfMoreThanOneMatch)
@@ -510,7 +510,7 @@ namespace PowerArgs
         /// <param name="position">the position of the argument</param>
         /// <param name="action">optionally specify the name of an action which may also have positional arguments defined</param>
         /// <returns>a matching CommandLineArgument or none if there was no match</returns>
-        public CommandLineArgument FindArgumentByPosition(int position, string action = null)
+        public CommandLineArgument FindArgumentByPosition(int position, string? action = null)
         {
             if (position < 0) throw new ArgumentOutOfRangeException("position must be >= 0");
 
@@ -582,6 +582,13 @@ namespace PowerArgs
         {
             var knownAliases = new List<string>();
             foreach (var argument in Arguments) knownAliases.AddRange(argument.Aliases);
+
+            AliasConventionProvider aliasConverter = new NoOpAliasConverter();
+
+            if (t.HasAttr<ArgAliasConvention>())
+            {
+              aliasConverter = t.Attr<ArgAliasConvention>().Provider;
+            }
 
             BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public;
 

@@ -80,7 +80,7 @@ namespace PowerArgs.Cli.Physics
             }
 
             SpaceTime.CurrentSpaceTime.SpacialElementAdded
-                .SubscribeForLifetime((element) => ConnectToElement(element), this);
+                .SubscribeForLifetime(this, (element) => ConnectToElement(element));
             this.OnDisposed(ClearChanges);
         }
 
@@ -108,19 +108,20 @@ namespace PowerArgs.Cli.Physics
                 removed.Add(element);
             });
 
-            element.SizeOrPositionChanged.SubscribeForLifetime(() =>
-            {
-                if(Time.CurrentTime == null)
+            element.SizeOrPositionChanged.SubscribeForLifetime(Lifetime.EarliestOf(this, element.Lifetime),
+                () =>
                 {
-                    throw new InvalidOperationException("Change did not occur on the time thread");
-                }
-                changedEvent.Fire(element);
-                if (element.InternalSpacialState.Changed == false)
-                {
-                    changed.Add(element);
-                    element.InternalSpacialState.Changed = true;
-                }
-            }, Lifetime.EarliestOf(this, element.Lifetime));
+                    if(Time.CurrentTime == null)
+                    {
+                        throw new InvalidOperationException("Change did not occur on the time thread");
+                    }
+                    changedEvent.Fire(element);
+                    if (element.InternalSpacialState.Changed == false)
+                    {
+                        changed.Add(element);
+                        element.InternalSpacialState.Changed = true;
+                    }
+                });
         }
     }
 }

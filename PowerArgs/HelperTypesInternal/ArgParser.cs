@@ -16,7 +16,7 @@ namespace PowerArgs
         //        Another potential item would be to refactor the parse method here.  It's a mess, but it's a working, heavily tested mess
         //        so cleaning it up will mean accepting some risk.
 
-        internal static ParseResult Parse(CommandLineArgumentsDefinition Definition, string[] commandLineArgs)
+        internal static ParseResult Parse(CommandLineArgumentsDefinition Definition, string?[] commandLineArgs)
         {
             var args = commandLineArgs;
 
@@ -46,8 +46,8 @@ namespace PowerArgs
                 }
                 else if (IsDashSpecifiedArgumentIdentifier(token))
                 {
-                    string key = token.Substring(1);
-                    string value;
+                    string? key = token.Substring(1);
+                    string? value;
 
                     // Handles long form syntax --argName=argValue.
                     if (key.StartsWith("-") && key.Contains("="))
@@ -175,7 +175,7 @@ namespace PowerArgs
         /// <param name="definition">the argument definition</param>
         /// <param name="resultContext">the parser result context</param>
         /// <returns>true if this argument should be treated as an argument value, false if it should be treated as an explicit argument name key</returns>
-        private static bool TreatSlashArgAsValueInsteadOfKey(string arg, int position, CommandLineArgumentsDefinition definition, ParseResult resultContext)
+        private static bool TreatSlashArgAsValueInsteadOfKey(string? arg, int position, CommandLineArgumentsDefinition definition, ParseResult resultContext)
         {
             if (arg.Length < 2 || arg[0] != '/' || position < 0) return false;
             if (definition.AllGlobalAndActionArguments.Where(a => a.Position == position).None()) return false;
@@ -209,12 +209,12 @@ namespace PowerArgs
         /// </summary>
         /// <param name="arg">the argument token to inspect</param>
         /// <returns>true if the given token looks like a dash specified argument identifier</returns>
-        public static bool IsDashSpecifiedArgumentIdentifier(string arg)
+        public static bool IsDashSpecifiedArgumentIdentifier(string? arg)
         {
             return arg.Length > 1 && arg[0] == '-' && char.IsDigit(arg[1]) == false;
         }
 
-        internal static bool TryParseKey(string cmdLineArg, out string key)
+        internal static bool TryParseKey(string? cmdLineArg, out string? key)
         {
             if(IsDashSpecifiedArgumentIdentifier(cmdLineArg) == false && cmdLineArg.StartsWith("/") == false)
             {
@@ -228,7 +228,7 @@ namespace PowerArgs
             }
         }
 
-        internal static string ParseKey(string cmdLineArg)
+        internal static string? ParseKey(string? cmdLineArg)
         {
             if (cmdLineArg.StartsWith("/"))
             {
@@ -237,7 +237,7 @@ namespace PowerArgs
             }
             else if (IsDashSpecifiedArgumentIdentifier(cmdLineArg))
             {
-                string key = cmdLineArg.Substring(1);
+                string? key = cmdLineArg.Substring(1);
 
                 // Handles long form syntax --argName=argValue.
                 if (key.StartsWith("-") && key.Contains("="))
@@ -254,7 +254,7 @@ namespace PowerArgs
             }
         }
 
-        private static bool IsBool(string key, CommandLineArgumentsDefinition definition, ParseResult resultContext)
+        private static bool IsBool(string? key, CommandLineArgumentsDefinition definition, ParseResult resultContext)
         {
             var match = definition.FindMatchingArgument(key, true);
             if (match == null)
@@ -285,7 +285,7 @@ namespace PowerArgs
             return match.ArgumentType == typeof(bool);
         }
 
-        private static bool IsArrayOrList(string key, CommandLineArgumentsDefinition definition, ParseResult resultContext)
+        private static bool IsArrayOrList(string? key, CommandLineArgumentsDefinition definition, ParseResult resultContext)
         {
             var match = definition.FindMatchingArgument(key, true);
             if (match == null)
@@ -316,14 +316,14 @@ namespace PowerArgs
             return match.ArgumentType.IsArray || match.ArgumentType.GetInterfaces().Contains(typeof(IList));
         }
 
-        private static KeyValuePair<string, string> ParseSlashExplicitOption(string a)
+        private static KeyValuePair<string?, string> ParseSlashExplicitOption(string? a)
         {
             var key = a.Contains(":") ? a.Substring(1, a.IndexOf(":") - 1).Trim() : a.Substring(1, a.Length - 1);
             var value = a.Contains(":") ? a.Substring(a.IndexOf(":") + 1).Trim() : "";
 
             if (key.Length == 0) throw new ArgException("Missing argument value after '/'");
 
-            return new KeyValuePair<string, string>(key, value);
+            return new KeyValuePair<string?, string>(key, value);
         }
     }
 }

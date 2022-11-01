@@ -50,18 +50,18 @@ namespace PowerArgs
         /// <summary>
         /// Write's the string representation of the given object to the console
         /// </summary>
-        void Write(object output);
+        void Write(object? output);
 
         /// <summary>
         /// Write's the string representation of the given object to the console, followed by a newline.
         /// </summary>
-        void WriteLine(object output);
+        void WriteLine(object? output);
 
         /// <summary>
         /// Writes the given console string to the console, preserving formatting
         /// </summary>
         /// <param name="consoleString">The string to write</param>
-        void Write(ConsoleString consoleString);
+        void Write(ConsoleString? consoleString);
 
         /// <summary>
         /// Writes the given character to the console, preserving formatting
@@ -75,7 +75,7 @@ namespace PowerArgs
         /// Writes the given console string to the console, followed by a newline, preserving formatting.
         /// </summary>
         /// <param name="consoleString">The string to write</param>
-        void WriteLine(ConsoleString consoleString);
+        void WriteLine(ConsoleString? consoleString);
 
         /// <summary>
         /// Writes a newline to the console
@@ -124,20 +124,20 @@ namespace PowerArgs
         public static IConsoleProvider Current = new StdConsoleProvider();
 
         private const int STD_OUTPUT_HANDLE = -11;
-        private const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
-        private const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
+        private const int ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
+        private const int DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
 
         [DllImport("kernel32.dll")]
-        private static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+        private static extern bool GetConsoleMode(IntPtr hConsoleHandle, out int lpMode);
 
         [DllImport("kernel32.dll")]
-        private static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+        private static extern bool SetConsoleMode(IntPtr hConsoleHandle, int dwMode);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr GetStdHandle(int nStdHandle);
 
         [DllImport("kernel32.dll")]
-        public static extern uint GetLastError();
+        public static extern int GetLastError();
 
         private static bool? _fancy;
 
@@ -176,7 +176,7 @@ namespace PowerArgs
             try
             {
                 var iStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-                if (!GetConsoleMode(iStdOut, out uint outConsoleMode))
+                if (!GetConsoleMode(iStdOut, out int outConsoleMode))
                 {
                     return false;
                 }

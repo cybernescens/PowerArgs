@@ -667,7 +667,7 @@ namespace ArgsTests
             Write(str);
         }
 
-        public void Write(object output)
+        public void Write(object? output)
         {
             string text = output == null ? "" : output.ToString();
             CursorLeft += text.Length;
@@ -677,7 +677,7 @@ namespace ArgsTests
                 WriteHappened(text);
             }
         }
-        public void WriteLine(object output) 
+        public void WriteLine(object? output) 
         {
             if(WriteHappened != null)
             {
@@ -716,7 +716,7 @@ namespace ArgsTests
         }
 
 
-        public void Write(ConsoleString consoleString)
+        public void Write(ConsoleString? consoleString)
         {
             Write(consoleString.ToString());
         }
@@ -726,7 +726,7 @@ namespace ArgsTests
             Write(consoleCharacter.ToString());
         }
 
-        public void WriteLine(ConsoleString consoleString)
+        public void WriteLine(ConsoleString? consoleString)
         {
             WriteLine(consoleString.ToString());
         }

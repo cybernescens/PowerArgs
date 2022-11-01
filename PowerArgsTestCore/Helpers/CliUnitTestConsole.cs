@@ -104,7 +104,7 @@ namespace ArgsTests.CLI
             }
         }
 
-        public void Write(ConsoleString consoleString)
+        public void Write(ConsoleString? consoleString)
         {
             foreach(var c in consoleString)
             {
@@ -112,7 +112,7 @@ namespace ArgsTests.CLI
             }
         }
 
-        public void Write(object output)
+        public void Write(object? output)
         {
             Write(((string)(output == null ? "" : output.ToString())).ToConsoleString());
         }
@@ -122,13 +122,13 @@ namespace ArgsTests.CLI
             CursorTop++;
         }
 
-        public void WriteLine(ConsoleString consoleString)
+        public void WriteLine(ConsoleString? consoleString)
         {
             Write(consoleString);
             WriteLine();
         }
 
-        public void WriteLine(object output)
+        public void WriteLine(object? output)
         {
             Write(output);
             WriteLine();

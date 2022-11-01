@@ -214,8 +214,7 @@ namespace ArgsTests.CLI
     
     public class StatePickerAssistant : ContextAssistSearch
     {
-        List<string> states = new List<string>
-        {
+        List<string?> states = new List<string?> {
             "Alabama",
             "Alaska", 
             "Arizona", 
@@ -270,7 +269,7 @@ namespace ArgsTests.CLI
 
         static Random rand = new Random();
 
-        protected override System.Collections.Generic.List<ContextAssistSearchResult> GetResults(string searchString)
+        protected override System.Collections.Generic.List<ContextAssistSearchResult> GetResults(string? searchString)
         {
             return states.Where(r => r.StartsWith(searchString, StringComparison.InvariantCultureIgnoreCase))
                 .Select(s => ContextAssistSearchResult.FromString(s))
@@ -282,7 +281,7 @@ namespace ArgsTests.CLI
             get { return false; }
         }
 
-        protected override System.Threading.Tasks.Task<List<ContextAssistSearchResult>> GetResultsAsync(string searchString)
+        protected override System.Threading.Tasks.Task<List<ContextAssistSearchResult>> GetResultsAsync(string? searchString)
         {
             throw new NotImplementedException();
         }
@@ -296,7 +295,7 @@ namespace ArgsTests.CLI
             public string Address { get; set; }
         }
 
-        public static List<Person> people = new List<Person>()
+        public static List<Person?> people = new List<Person?>()
         {
             new Person()
             {
@@ -321,14 +320,14 @@ namespace ArgsTests.CLI
             get { return false; }
         }
 
-        protected override List<ContextAssistSearchResult> GetResults(string searchString)
+        protected override List<ContextAssistSearchResult> GetResults(string? searchString)
         {
             return people.Where(p => p.Name.StartsWith(searchString, StringComparison.InvariantCultureIgnoreCase) || p.Address.StartsWith(searchString, StringComparison.InvariantCultureIgnoreCase))
                          .Select(p => ContextAssistSearchResult.FromObject(p))
                          .ToList();
         }
 
-        protected override Task<List<ContextAssistSearchResult>> GetResultsAsync(string searchString)
+        protected override Task<List<ContextAssistSearchResult>> GetResultsAsync(string? searchString)
         {
             throw new NotImplementedException();
         }
@@ -336,8 +335,7 @@ namespace ArgsTests.CLI
 
     public class StatePickerAssistantAsync : ContextAssistSearch
     {
-        public static readonly IEnumerable<string> states = new List<string>
-        {
+        public static readonly IEnumerable<string?> states = new List<string?> {
             "Alabama",
             "Alaska", 
             "Arizona", 
@@ -392,7 +390,7 @@ namespace ArgsTests.CLI
 
         static Random rand = new Random();
 
-        protected override System.Collections.Generic.List<ContextAssistSearchResult> GetResults(string searchString)
+        protected override System.Collections.Generic.List<ContextAssistSearchResult> GetResults(string? searchString)
         {
             throw new NotImplementedException();
         }
@@ -402,7 +400,7 @@ namespace ArgsTests.CLI
             get { return true; }
         }
 
-        protected override System.Threading.Tasks.Task<List<ContextAssistSearchResult>> GetResultsAsync(string searchString)
+        protected override System.Threading.Tasks.Task<List<ContextAssistSearchResult>> GetResultsAsync(string? searchString)
         {
             return Task.Factory.StartNew<List<ContextAssistSearchResult>>(() => 
             {

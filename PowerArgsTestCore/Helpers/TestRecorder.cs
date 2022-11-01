@@ -11,7 +11,7 @@ namespace ArgsTests
 {
     public static class TestRecorder
     {
-        public static ConsoleBitmapVideoWriter CreateTestRecorder(string testName, TestContext context)
+        public static ConsoleBitmapVideoWriter? CreateTestRecorder(string testName, TestContext context)
         {
             var outputDir = @"C:\temp\recordings";
 

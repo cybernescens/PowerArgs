@@ -54,7 +54,7 @@ namespace PowerArgs
         /// <param name="context"></param>
         /// <param name="completion">The variable that you should assign the completed string to if you find a match.</param>
         /// <returns>true if the tab completion was successful, false otherwise</returns>
-        public bool TryComplete(TabCompletionContext context, out string completion)
+        public bool TryComplete(TabCompletionContext context, out string? completion)
         {
             manager.MinCharsBeforeCyclingBegins = this.MinCharsBeforeCyclingBegins;
 

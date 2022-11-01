@@ -59,13 +59,13 @@ namespace PowerArgs
         /// <summary>
         /// The replacement key (e.g. 'each' in {{each foo in bar }}) to use when the given provider is registered
         /// </summary>
-        public string Key { get; private set; }
+        public string? Key { get; private set; }
 
         /// <summary>
         /// Creates a new DynamicExpressionProviderAttribute given a key
         /// </summary>
         /// <param name="key"></param>
-        public DynamicExpressionProviderAttribute(string key)
+        public DynamicExpressionProviderAttribute(string? key)
         {
             this.Key = key;
         }
@@ -76,12 +76,12 @@ namespace PowerArgs
     /// </summary>
     public class DocumentExpressionParser
     {
-        private Dictionary<string, IDocumentExpressionProvider> expressionProviders;
+        private Dictionary<string?, IDocumentExpressionProvider> expressionProviders;
 
         /// <summary>
         /// Gets a list of registered expression provider keys
         /// </summary>
-        public List<String> RegisteredReplacementExpressionProviderKeys
+        public List<string?> RegisteredReplacementExpressionProviderKeys
         {
             get
             {
@@ -94,7 +94,7 @@ namespace PowerArgs
         /// </summary>
         public DocumentExpressionParser()
         {
-            this.expressionProviders = new Dictionary<string, IDocumentExpressionProvider>();
+            this.expressionProviders = new Dictionary<string?, IDocumentExpressionProvider>();
             this.expressionProviders.Add("if", new IfExpressionProvider(false));
             this.expressionProviders.Add("ifnot", new IfExpressionProvider(true));
             this.expressionProviders.Add("each", new EachExpressionProvider());
@@ -127,7 +127,7 @@ namespace PowerArgs
         /// <param name="replacementKey">The unique key for the replacement provider (e.g. 'each' in {{each foo in bar}}</param>
         /// <param name="provider">The provider to register</param>
         /// <param name="allowOverrideExistingKeys">If true, allow this provider to replace an existing provider registered with the same key .  If false, an exception will be thrown if a conflict is found.</param>
-        public void RegisterReplacementExpressionProvider(string replacementKey, IDocumentExpressionProvider provider, bool allowOverrideExistingKeys = false)
+        public void RegisterReplacementExpressionProvider(string? replacementKey, IDocumentExpressionProvider provider, bool allowOverrideExistingKeys = false)
         {
             if(this.expressionProviders.ContainsKey(replacementKey))
             {
@@ -150,7 +150,7 @@ namespace PowerArgs
         /// Unregisters the expression provider with the given key
         /// </summary>
         /// <param name="replacementKey">The key of the provider to unregister</param>
-        public void UnregisterReplacementExpressionProvider(string replacementKey)
+        public void UnregisterReplacementExpressionProvider(string? replacementKey)
         {
             bool removed = this.expressionProviders.Remove(replacementKey);
             if(removed == false)
@@ -300,7 +300,7 @@ namespace PowerArgs
             return read;
         }
 
-        private DocumentToken AdvanceAndExpect(TokenReader<DocumentToken> reader, DocumentTokenType expectedType, string expectedText, bool skipWhitespace = false)
+        private DocumentToken AdvanceAndExpect(TokenReader<DocumentToken> reader, DocumentTokenType expectedType, string? expectedText, bool skipWhitespace = false)
         {
 
             DocumentToken read;
@@ -317,7 +317,7 @@ namespace PowerArgs
             return read;
         }
 
-        private DocumentRenderException Unexpected(string expected, DocumentToken actual = null)
+        private DocumentRenderException Unexpected(string? expected, DocumentToken actual = null)
         {
             if (actual != null)
             {

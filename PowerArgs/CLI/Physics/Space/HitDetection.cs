@@ -13,8 +13,8 @@ namespace PowerArgs.Cli.Physics
     public class Impact
     {
         public Angle Angle { get; set; }
-        public ICollider MovingObject { get; set; }
-        public ICollider ColliderHit { get; set; }
+        public ICollider? MovingObject { get; set; }
+        public ICollider? ColliderHit { get; set; }
         public HitType HitType { get; set; }
         public HitPrediction Prediction { get; set; }
     }
@@ -67,7 +67,7 @@ namespace PowerArgs.Cli.Physics
 
         }
 
-        public HitDetectionOptions(ICollider c, IEnumerable<ICollider> obstacles)
+        public HitDetectionOptions(ICollider? c, IEnumerable<ICollider> obstacles)
         {
             MovingObject = c.Bounds;
             Colliders = obstacles.ToArray();
@@ -99,14 +99,14 @@ namespace PowerArgs.Cli.Physics
     public static class HitDetection
     {
         public static bool HasLineOfSight(this Velocity from, ICollider to) => HasLineOfSight(from.Element, to, from.GetObstacles());
-        public static bool HasLineOfSight(this SpacialElement from, ICollider to) => HasLineOfSight(from, to, from.GetObstacles());
-        public static bool HasLineOfSight(this SpacialElement from, RectF to) => HasLineOfSight(from, to, from.GetObstacles());
-        public static bool HasLineOfSight(this ICollider from, ICollider to, IEnumerable<ICollider> obstacles) => GetLineOfSightObstruction(from, to, obstacles) == null;
-        public static bool HasLineOfSight(this ICollider from, RectF to, IEnumerable<ICollider> obstacles) => GetLineOfSightObstruction(from, to, obstacles) == null;
+        public static bool HasLineOfSight(this SpacialElement? from, ICollider to) => HasLineOfSight(from, to, from.GetObstacles());
+        public static bool HasLineOfSight(this SpacialElement? from, RectF to) => HasLineOfSight(from, to, from.GetObstacles());
+        public static bool HasLineOfSight(this ICollider? from, ICollider to, IEnumerable<ICollider> obstacles) => GetLineOfSightObstruction(from, to, obstacles) == null;
+        public static bool HasLineOfSight(this ICollider? from, RectF to, IEnumerable<ICollider> obstacles) => GetLineOfSightObstruction(from, to, obstacles) == null;
         public static bool HasLineOfSight(this RectF from, ICollider to, IEnumerable<ICollider> obstacles) => GetLineOfSightObstruction(from, to, obstacles) == null;
         public static bool HasLineOfSight(this RectF from, RectF to, IEnumerable<ICollider> obstacles) => GetLineOfSightObstruction(from, to, obstacles) == null;
         public static bool HasLineOfSight(this RectF from, RectF to, IEnumerable<RectF> obstacles) => GetLineOfSightObstruction(from, to, obstacles.Select(o => new ColliderBox(o))) == null;
-        public static ICollider GetLineOfSightObstruction(this ICollider from, ICollider to, IEnumerable<ICollider> obstacles, CastingMode castingMode = CastingMode.Rough)
+        public static ICollider GetLineOfSightObstruction(this ICollider? from, ICollider to, IEnumerable<ICollider> obstacles, CastingMode castingMode = CastingMode.Rough)
         {
             var options = new HitDetectionOptions(from, obstacles.Union(new[] { to }));
             options.Mode = castingMode;
@@ -144,7 +144,7 @@ namespace PowerArgs.Cli.Physics
             return GetLineOfSightObstruction(fromBox, to, obstacles, castingMode);
         }
 
-        public static ICollider GetLineOfSightObstruction(this ICollider from, RectF to, IEnumerable<ICollider> obstacles, CastingMode castingMode = CastingMode.Rough)
+        public static ICollider GetLineOfSightObstruction(this ICollider? from, RectF to, IEnumerable<ICollider> obstacles, CastingMode castingMode = CastingMode.Rough)
         {
             var toBox = new ColliderBox(to);
             return GetLineOfSightObstruction(from, toBox, obstacles, castingMode);

@@ -11,7 +11,7 @@ namespace PowerArgs
         /// Dictionary of values that were either in the format -key value or /key:value on
         /// the command line.
         /// </summary>
-        public Dictionary<string, string> ExplicitParameters { get; private set; }
+        public Dictionary<string?, string> ExplicitParameters { get; private set; }
 
         /// <summary>
         /// Dictionary of values that were implicitly specified by position where the key is the position (e.g. 0)
@@ -22,7 +22,7 @@ namespace PowerArgs
         /// John would be an implicit parameter at position 0.
         /// Smith would be an implicit parameter at position 1.
         /// </summary>
-        public Dictionary<int, string> ImplicitParameters { get; private set; }
+        public Dictionary<int, string?> ImplicitParameters { get; private set; }
 
         /// <summary>
         /// This is only populated for programs that support multiple command line arguments mapping to a single logical argument.  For example, 
@@ -30,21 +30,21 @@ namespace PowerArgs
         /// In this case, this dictionary would contain an entry with key 'files' and values 'file2, file3'.  Note that file1 will be populated
         /// in ExplicitParameters for legacy reasons
         /// </summary>
-        public Dictionary<string, List<string>> AdditionalExplicitParameters { get; private set; }
+        public Dictionary<string, List<string?>> AdditionalExplicitParameters { get; private set; }
 
         internal ParseResult()
         {
-            ExplicitParameters = new Dictionary<string, string>(); 
-            ImplicitParameters = new Dictionary<int, string>();
-            AdditionalExplicitParameters = new Dictionary<string, List<string>>();  
+            ExplicitParameters = new Dictionary<string?, string>(); 
+            ImplicitParameters = new Dictionary<int, string?>();
+            AdditionalExplicitParameters = new Dictionary<string, List<string?>>();  
         }
 
-        internal void AddAdditionalParameter(string key, string value)
+        internal void AddAdditionalParameter(string? key, string? value)
         {
-            List<string> target;
+            List<string?> target;
             if(AdditionalExplicitParameters.TryGetValue(key, out target) == false)
             {
-                target = new List<string>();
+                target = new List<string?>();
                 target.Add(value);
                 AdditionalExplicitParameters.Add(key, target);
             }
@@ -54,7 +54,7 @@ namespace PowerArgs
             }
         }
 
-        internal bool TryGetAndRemoveAdditionalExplicitParameters(CommandLineArgument argument, out List<string> result)
+        internal bool TryGetAndRemoveAdditionalExplicitParameters(CommandLineArgument argument, out List<string?> result)
         {
             foreach(var knownKey in AdditionalExplicitParameters.Keys)
             {

@@ -9,14 +9,14 @@ namespace PowerArgs.Cli
     public class FixedAspectRatioPanel : ProtectedConsolePanel
     {
         private float widthOverHeight;
-        private ConsoleControl content;
+        private ConsoleControl? content;
 
         /// <summary>
         /// Creates a fixed aspect ratio panel
         /// </summary>
         /// <param name="widthOverHeight">the aspect ratio defined as the width divided by the height</param>
         /// <param name="content">the content to center on this panel</param>
-        public FixedAspectRatioPanel(float widthOverHeight, ConsoleControl content)
+        public FixedAspectRatioPanel(float widthOverHeight, ConsoleControl? content)
         {
             this.content = content;
             this.widthOverHeight = widthOverHeight;

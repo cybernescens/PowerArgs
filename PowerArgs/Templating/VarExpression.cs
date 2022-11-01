@@ -35,7 +35,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">The data context used to store the newly initialized variable</param>
         /// <returns>an empty string</returns>
-        public ConsoleString Evaluate(DocumentRendererContext context)
+        public ConsoleString? Evaluate(DocumentRendererContext context)
         {
             if (NameToken.Value == "ConsoleForegroundColor" || NameToken.Value == "ConsoleBackgroundColor")
             {
@@ -79,7 +79,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">the context that should contain the local variable to remove</param>
         /// <returns>an empty string</returns>
-        public ConsoleString Evaluate(DocumentRendererContext context)
+        public ConsoleString? Evaluate(DocumentRendererContext context)
         {
             context.LocalVariables.Remove(NameToken);
             return ConsoleString.Empty;

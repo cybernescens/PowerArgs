@@ -10,6 +10,6 @@
         /// </summary>
         /// <param name="context">The data context</param>
         /// <returns>The evaluated ConsoleString.</returns>
-        ConsoleString Evaluate(DocumentRendererContext context);
+        ConsoleString? Evaluate(DocumentRendererContext context);
     }
 }

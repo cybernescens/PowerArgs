@@ -32,7 +32,7 @@ namespace PowerArgs
             for (int i = 0; i < context.CmdLineArgs.Length; i++ )
             {
                 var arg = context.CmdLineArgs[i];
-                string key;
+                string? key;
 
                 if (ArgParser.TryParseKey(arg, out key))
                 {

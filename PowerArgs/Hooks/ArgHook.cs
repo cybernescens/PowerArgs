@@ -213,7 +213,7 @@ namespace PowerArgs
             /// The command line arguments that were passed to the Args class.  This is always available and you
             /// can modify it in the BeforeParse hook at your own risk.
             /// </summary>
-            public string[] CmdLineArgs;
+            public string?[] CmdLineArgs;
 
             /// <summary>
             /// The string value that was specified for the current argument.  This will align with the value of ArgHook.CurrentArgument.
@@ -222,7 +222,7 @@ namespace PowerArgs
             /// AfterPopulateProperties.
             /// 
             /// </summary>
-            public string ArgumentValue;
+            public string? ArgumentValue;
 
             /// <summary>
             /// This is the instance of your argument class.  The amount that it is populated will depend on how far along in the pipeline

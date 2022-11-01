@@ -15,15 +15,15 @@ namespace PowerArgs.Cli
     {
         public ThreeMonthCarouselOptions Options { get; private set; }
 
-        private MonthCalendar left;
-        private MonthCalendar center;
-        private MonthCalendar right;
+        private MonthCalendar? left;
+        private MonthCalendar? center;
+        private MonthCalendar? right;
 
         private ILifetime seekLt;
 
-        private ConsoleControl leftPlaceHolder;
-        private ConsoleControl centerPlaceHolder;
-        private ConsoleControl rightPlaceHolder;
+        private ConsoleControl? leftPlaceHolder;
+        private ConsoleControl? centerPlaceHolder;
+        private ConsoleControl? rightPlaceHolder;
 
         public ThreeMonthCarousel(ThreeMonthCarouselOptions options = null)
         {
@@ -39,18 +39,19 @@ namespace PowerArgs.Cli
             if (Options.AdvanceMonthBackwardKey == null || Options.AdvanceMonthForwardKey == null) return;
             this.CanFocus = true;
 
-            this.KeyInputReceived.SubscribeForLifetime(key =>
-            {
-                var back = Options.AdvanceMonthBackwardKey;
-                var fw = Options.AdvanceMonthForwardKey;
+            this.KeyInputReceived.SubscribeForLifetime(this,
+                key =>
+                {
+                    var back = Options.AdvanceMonthBackwardKey;
+                    var fw = Options.AdvanceMonthForwardKey;
 
-                var backModifierMatch = back.Modifier == null || key.Modifiers.HasFlag(back.Modifier);
-                if (key.Key == back.Key && backModifierMatch) Seek(false, Options.AnimationDuration);
+                    var backModifierMatch = back.Modifier == null || key.Modifiers.HasFlag(back.Modifier);
+                    if (key.Key == back.Key && backModifierMatch) Seek(false, Options.AnimationDuration);
 
-                var fwModifierMatch = fw.Modifier == null || key.Modifiers.HasFlag(fw.Modifier);
-                if (key.Key == fw.Key && fwModifierMatch) Seek(true, Options.AnimationDuration);
+                    var fwModifierMatch = fw.Modifier == null || key.Modifiers.HasFlag(fw.Modifier);
+                    if (key.Key == fw.Key && fwModifierMatch) Seek(true, Options.AnimationDuration);
 
-            }, this);
+                });
         }
 
 
@@ -171,7 +172,7 @@ namespace PowerArgs.Cli
 
         private void SetupInvisiblePlaceholders()
         {
-            var placeholderGrid = ProtectedPanel.Add(new GridLayout(new GridLayoutOptions()
+            GridLayout? placeholderGrid = ProtectedPanel.Add(new GridLayout(new GridLayoutOptions()
             {
                 Columns = new List<GridColumnDefinition>()
                 {
@@ -209,7 +210,7 @@ namespace PowerArgs.Cli
         private RectF CalculateCenterDestination() => MapPlaceholderBoundsToControlBounds(centerPlaceHolder);
         private RectF CalculateRightDestination() => MapPlaceholderBoundsToControlBounds(rightPlaceHolder);
 
-        private RectF MapPlaceholderBoundsToControlBounds(ConsoleControl placeholder) => new RectF(
+        private RectF MapPlaceholderBoundsToControlBounds(ConsoleControl? placeholder) => new RectF(
                 placeholder.AbsoluteX - ProtectedPanel.AbsoluteX,
                 placeholder.AbsoluteY - ProtectedPanel.AbsoluteY,
                 placeholder.Width, 

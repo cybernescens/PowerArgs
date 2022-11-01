@@ -61,8 +61,7 @@ namespace PowerArgs.Samples
 
     public class StatePickerAssistant : ContextAssistPicker
     {
-        public static List<string> States = new List<string>
-        {
+        public static List<string?> States = new List<string?> {
             "Alabama",
             "Alaska", 
             "Arizona", 

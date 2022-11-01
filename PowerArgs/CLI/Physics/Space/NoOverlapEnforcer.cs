@@ -10,18 +10,19 @@ namespace PowerArgs.Cli.Physics
             public ICollider OverlappingElement { get; set; }
         }
 
-        public static void EnableForLifetime(Func<SpacialElement, bool> filter, Action<OverlapInfo> handler, ILifetimeManager lt)
+        public static void EnableForLifetime(Func<SpacialElement, bool> filter, Action<OverlapInfo> handler, ILifetimeManager? lt)
         {
             foreach (var element in SpaceTime.CurrentSpaceTime.Elements)
             {
                 var myElement = element;
-                myElement.SizeOrPositionChanged.SubscribeForLifetime(() => AssertNoOverlaps(filter, myElement, handler), lt);
+                myElement.SizeOrPositionChanged.SubscribeForLifetime(lt, () => AssertNoOverlaps(filter, myElement, handler));
             }
 
-            SpaceTime.CurrentSpaceTime.SpacialElementAdded.SubscribeForLifetime((newEl) =>
-            {
-                newEl.SizeOrPositionChanged.SubscribeForLifetime(() => AssertNoOverlaps(filter, newEl, handler), lt);
-            }, lt);
+            SpaceTime.CurrentSpaceTime.SpacialElementAdded.SubscribeForLifetime(lt,
+                (newEl) =>
+                {
+                    newEl.SizeOrPositionChanged.SubscribeForLifetime(lt, () => AssertNoOverlaps(filter, newEl, handler));
+                });
         }
 
         private static ICollider GetObstacleIfMovedTo(SpacialElement el, int? z = null)

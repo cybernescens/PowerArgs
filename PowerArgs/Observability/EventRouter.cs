@@ -178,9 +178,9 @@ namespace PowerArgs
         /// <param name="route">the event to subscribe to</param>
         /// <param name="handler">the event handler</param>
         /// <param name="lifetimeManager">defines the lifetime of the subscription</param>
-        public void Register(string route, Action<RoutedEvent<T>> handler, ILifetimeManager lifetimeManager)
+        public void Register(string route, Action<RoutedEvent<T>> handler, ILifetimeManager? lifetimeManager)
         {
-            GetOrAddRoutedEvent(route).SubscribeForLifetime(handler, lifetimeManager);
+            GetOrAddRoutedEvent(route).SubscribeForLifetime(lifetimeManager, handler);
 
             lifetimeManager.OnDisposed(() =>
             {
@@ -196,12 +196,13 @@ namespace PowerArgs
         public void RegisterOnce(string route, Action<RoutedEvent<T>> handler)
         {
             var routeLifetime = new Lifetime();
-            GetOrAddRoutedEvent(route).SubscribeForLifetime((t)=>
-            {
-                handler(t);
-                routes.Remove(route);
-                routeLifetime.Dispose();
-            }, routeLifetime);
+            GetOrAddRoutedEvent(route).SubscribeForLifetime(routeLifetime,
+                (t)=>
+                {
+                    handler(t);
+                    routes.Remove(route);
+                    routeLifetime.Dispose();
+                });
         }
         private Event<RoutedEvent<T>> GetOrAddRoutedEvent(string route)
         {

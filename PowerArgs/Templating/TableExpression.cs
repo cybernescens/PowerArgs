@@ -58,7 +58,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="context">the data context</param>
         /// <returns>the console friendly table, as a ConsoleString</returns>
-        public ConsoleString Evaluate(DocumentRendererContext context)
+        public ConsoleString? Evaluate(DocumentRendererContext context)
         {
             var eval = context.EvaluateExpression(this.EvalToken.Value);
 
@@ -73,8 +73,8 @@ namespace PowerArgs
 
             IEnumerable collection = (IEnumerable)eval;
 
-            List<ConsoleString> headers = new List<ConsoleString>();
-            List<List<ConsoleString>> rows = new List<List<ConsoleString>>();
+            List<ConsoleString?> headers = new List<ConsoleString?>();
+            List<List<ConsoleString?>> rows = new List<List<ConsoleString?>>();
             List<ColumnOverflowBehavior> overflows = new List<ColumnOverflowBehavior>();
 
             for (int colIndex = 0; colIndex < Columns.Count; colIndex++ )
@@ -114,10 +114,10 @@ namespace PowerArgs
                     continue;
                 }
 
-                var row = new List<ConsoleString>();
+                var row = new List<ConsoleString?>();
                 foreach (var col in Columns)
                 {
-                    string propName;
+                    string? propName;
                     if (col.Value.Contains(">"))
                     {
                         propName = col.Value.Split('>')[0];
@@ -136,7 +136,7 @@ namespace PowerArgs
                     if (propToGet == null) throw new DocumentRenderException("'" + propName + "' is not a valid property for type '" + element.GetType().FullName + "'", col);
                     var value = propToGet.GetValue(element, null);
 
-                    ConsoleString valueString;
+                    ConsoleString? valueString;
 
                     if(value != null)
                     {
@@ -158,7 +158,7 @@ namespace PowerArgs
                 {
                     foreach (var val in ((CommandLineArgument)element).EnumValuesAndDescriptions)
                     {
-                        List<ConsoleString> possibilitiesRow = new List<ConsoleString>();
+                        List<ConsoleString?> possibilitiesRow = new List<ConsoleString?>();
                         for (int i = 0; i < Columns.Count - 1; i++)
                         {
                             possibilitiesRow.Add(ConsoleString.Empty);
@@ -169,7 +169,7 @@ namespace PowerArgs
                 }
             }
 
-            string rowPrefix = "";
+            string? rowPrefix = "";
             for(int i = 0; i < indent; i++)
             {
                 rowPrefix += " ";

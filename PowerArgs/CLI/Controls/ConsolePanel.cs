@@ -1,152 +1,139 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Runtime.CompilerServices;
 
-namespace PowerArgs.Cli
+namespace PowerArgs.Cli;
+
+public enum CompositionMode
 {
-    public enum CompositionMode
-    {
-        PaintOver = 0,
-        BlendBackground = 1,
-        BlendVisible = 2,
-    }
+    PaintOver = 0,
+    BlendBackground = 1,
+    BlendVisible = 2
+}
+
+/// <summary>
+///     A console control that has nested control within its bounds
+/// </summary>
+public class ConsolePanel : Container
+{
+    private readonly List<ConsoleControl> sortedControls = new();
+
+    public ConsolePanel() : this(1, 1) { }
 
     /// <summary>
-    /// A console control that has nested control within its bounds
+    ///     Creates a new console panel
     /// </summary>
-    public class ConsolePanel : Container
+    public ConsolePanel(int w, int h) : base(w, h)
     {
-        /// <summary>
-        /// The nested controls
-        /// </summary>
-        public ObservableCollection<ConsoleControl> Controls { get; private set; }
-
-        private List<ConsoleControl> sortedControls = new List<ConsoleControl>();
-
-        /// <summary>
-        /// All nested controls, including those that are recursively nested within inner console panels
-        /// </summary>
-        public override IEnumerable<ConsoleControl> Children =>  Controls;
-
-        public ConsolePanel() : this(1,1) { }
-
-        /// <summary>
-        /// Creates a new console panel
-        /// </summary>
-        public ConsolePanel(int w, int h) : base(w,h)
-        {
-            Controls = new ObservableCollection<ConsoleControl>();
-            Controls.Added.SubscribeForLifetime((c) => 
-            {
+        Controls.Added.SubscribeForLifetime(
+            this,
+            c => {
                 c.Parent = this;
                 sortedControls.Add(c);
                 SortZ();
-                c.SubscribeForLifetime(nameof(c.ZIndex), () => SortZ(), Controls.GetMembershipLifetime(c));
-            }, this);
-            Controls.AssignedToIndex.SubscribeForLifetime((assignment) => throw new NotSupportedException("Index assignment is not supported in Controls collection"), this);
-            Controls.Removed.SubscribeForLifetime((c) => 
-            {
-                sortedControls.Remove(c);
-                c.Parent = null; 
-            }, this);
-
-            this.OnDisposed(() =>
-            {
-                foreach(var child in Controls.ToArray())
-                {
-                    child.TryDispose();
-                }
+                c.SubscribeForLifetime(Controls.GetMembershipLifetime(c)!, nameof(c.ZIndex), SortZ);
             });
 
-            this.CanFocus = false;
-        }
+        Controls.AssignedToIndex.SubscribeForLifetime(
+            this,
+            (object[] _) =>
+                throw new NotSupportedException("Index assignment is not supported in Controls collection"));
 
-        /// <summary>
-        /// Adds a control to the panel
-        /// </summary>
-        /// <typeparam name="T">the type of controls being added</typeparam>
-        /// <param name="c">the control to add</param>
-        /// <returns>the control that was added</returns>
-        public T Add<T>(T c) where T : ConsoleControl
-        {
-            Controls.Add(c);
-            return c;
-        }
+        Controls.Removed.SubscribeForLifetime(
+            this,
+            c => {
+                sortedControls.Remove(c);
+                c.Parent = null;
+            });
 
-        /// <summary>
-        /// Adds a collection of controls to the panel
-        /// </summary>
-        /// <param name="controls">the controls to add</param>
-        public void AddRange(IEnumerable<ConsoleControl> controls)
-        {
-            foreach(var c in controls)
-            {
-                Controls.Add(c);
-            }
-        }
+        OnDisposed(
+            () => {
+                foreach (var child in Controls.ToArray())
+                    child.TryDispose();
+            });
+    }
 
-        private static int CompareZ(ConsoleControl a, ConsoleControl b) => 
-            a.ZIndex == b.ZIndex ? a.ParentIndex.CompareTo(b.ParentIndex) : a.ZIndex.CompareTo(b.ZIndex);
-        
-        private void SortZ()
-        {
-            for (var i = 0; i < sortedControls.Count; i++)
-            {
-                sortedControls[i].ParentIndex = i;
-            }
-            sortedControls.Sort(CompareZ);
-            ConsoleApp.Current?.RequestPaint();
-        }
- 
-        /// <summary>
-        /// Paints this control
-        /// </summary>
-        /// <param name="context">the drawing surface</param>
-        protected override void OnPaint(ConsoleBitmap context)
-        {
-            foreach (var control in sortedControls)
-            {
-                if (control.Width > 0 && control.Height > 0 && control.IsVisible)
-                {
-                    Compose(control);
-                }
-            }
+    public override bool CanFocus => false;
 
-            foreach (var filter in RenderFilters)
-            {
-                filter.Control = this;
-                filter.Filter(Bitmap);
-            }
-        }   
+    /// <summary>
+    ///     The nested controls
+    /// </summary>
+    public ObservableCollection<ConsoleControl> Controls { get; } = new();
+
+    /// <summary>
+    ///     All nested controls, including those that are recursively nested within inner console panels
+    /// </summary>
+    public override IEnumerable<ConsoleControl> Children => Controls;
+
+    /// <summary>
+    ///     Adds a control to the panel
+    /// </summary>
+    /// <typeparam name="T">the type of controls being added</typeparam>
+    /// <param name="c">the control to add</param>
+    /// <returns>the control that was added</returns>
+    public T Add<T>(T c) where T : ConsoleControl
+    {
+        c.Parent = this;
+        Controls.Add(c);
+        return c;
     }
 
     /// <summary>
-    /// A ConsolePanel that can prevent outside influences from
-    /// adding to its Controls collection. You must use the internal
-    /// Unlock method to add or remove controls.
+    ///     Adds a collection of controls to the panel
     /// </summary>
-    public class ProtectedConsolePanel : Container
+    /// <param name="controls">the controls to add</param>
+    public IEnumerable<T> AddRange<T>(IEnumerable<T> controls) where T : ConsoleControl => controls.Select(Add);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int CompareZ(ConsoleControl a, ConsoleControl b) =>
+        a.ZIndex == b.ZIndex ? a.ParentIndex.CompareTo(b.ParentIndex) : a.ZIndex.CompareTo(b.ZIndex);
+
+    private void SortZ()
     {
-        protected ConsolePanel ProtectedPanel { get; private set; }
-        internal ConsolePanel ProtectedPanelInternal => ProtectedPanel;
-        public override IEnumerable<ConsoleControl> Children =>  ProtectedPanel.Children;    
+        for (var i = 0; i < sortedControls.Count; i++)
+            sortedControls[i].ParentIndex = i;
 
-        /// <summary>
-        /// Creates a new ConsolePanel
-        /// </summary>
-        public ProtectedConsolePanel()
-        {
-            this.CanFocus = false;
-            ProtectedPanel = new ConsolePanel();
-            ProtectedPanel.Parent = this;
-            ProtectedPanel.Fill();
-            this.SubscribeForLifetime(nameof(Background), () => ProtectedPanel.Background = Background, this);
-            this.SubscribeForLifetime(nameof(Foreground), () => ProtectedPanel.Foreground = Foreground, this);
-        }
+        sortedControls.Sort(CompareZ);
+        Application?.RequestPaint();
+    }
 
-        protected override void OnPaint(ConsoleBitmap context)
+    /// <summary>
+    ///     Paints this control
+    /// </summary>
+    /// <param name="context">the drawing surface</param>
+    protected override void OnPaint(ConsoleBitmap context)
+    {
+        foreach (var control in sortedControls.Where(
+                     control => control.Width > 0 && control.Height > 0 && control.IsVisible))
+            Compose(control);
+
+        foreach (var filter in RenderFilters)
         {
-            Compose(ProtectedPanel);
+            filter.Control = this;
+            filter.Filter(Bitmap);
         }
     }
+}
+
+/// <summary>
+///     A ConsolePanel that can prevent outside influences from
+///     adding to its Controls collection. You must use the internal
+///     Unlock method to add or remove controls.
+/// </summary>
+public class ProtectedConsolePanel : Container
+{
+    /// <summary>
+    ///     Creates a new ConsolePanel
+    /// </summary>
+    public ProtectedConsolePanel()
+    {
+        ProtectedPanel.Parent = this;
+        ProtectedPanel.Fill();
+        SubscribeForLifetime(this, nameof(Background), () => ProtectedPanel.Background = Background);
+        SubscribeForLifetime(this, nameof(Foreground), () => ProtectedPanel.Foreground = Foreground);
+    }
+
+    protected ConsolePanel ProtectedPanel { get; } = new();
+    internal ConsolePanel ProtectedPanelInternal => ProtectedPanel;
+    public override IEnumerable<ConsoleControl> Children => ProtectedPanel.Children;
+    public override bool CanFocus => false;
+    protected override void OnPaint(ConsoleBitmap context) { Compose(ProtectedPanel); }
 }

@@ -23,14 +23,14 @@ namespace ArgsTests.CLI.Controls
                 // We want to have a stack panel that can scroll if it gets too big
 
                 // Step 1 - Create a scroll panel and size it how you like
-                var scrollPanel = app.LayoutRoot.Add(new ScrollablePanel() { Background = RGB.DarkBlue }).Fill();
+                ScrollablePanel? scrollPanel = app.LayoutRoot.Add(new ScrollablePanel() { Background = RGB.DarkBlue }).Fill();
                 
                 // Step 2 - Add scrollable content to the ScrollableContent container
                 var stack = scrollPanel.ScrollableContent.Add(new StackPanel() { Background = RGB.Yellow, AutoSize = true });
                 
                 // IMPORTANT - The ScrollableContent container is the thing that will scroll if it's bigger than the view
                 //             so make sure it's height gets bigger as its content grows.
-                stack.SubscribeForLifetime(nameof(stack.Bounds), () => scrollPanel.ScrollableContent.Height = stack.Height, stack);
+                stack.SubscribeForLifetime(stack, nameof(stack.Bounds), () => scrollPanel.ScrollableContent.Height = stack.Height);
 
                 // Step 3 - Add 100 focusable rows to the stack panel. Making the rows focusable is critical since
                 //          the scroll panel will automatically take care of scrolling to the currently focused control
@@ -39,8 +39,8 @@ namespace ArgsTests.CLI.Controls
                 for(var i = 1; i <= rows; i++)
                 {
                     var label = stack.Add(new Label() { CanFocus = true, Text = $"row {i} of {rows}".ToWhite() });
-                    label.Focused.SubscribeForLifetime(() => label.Text = label.Text.ToCyan(), label);
-                    label.Focused.SubscribeForLifetime(() => label.Text = label.Text.ToWhite(), label);
+                    label.Focused.SubscribeForLifetime(label, () => label.Text = label.Text.ToCyan());
+                    label.Focused.SubscribeForLifetime(label, () => label.Text = label.Text.ToWhite());
                 }
 
                 // Step 4 - Tab through all the rows. The scrollbar and scrollable content should automatically

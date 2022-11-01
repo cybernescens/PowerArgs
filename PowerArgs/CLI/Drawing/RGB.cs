@@ -152,7 +152,7 @@ namespace PowerArgs
 
         private static Regex RGBRegex;
 
-        public static RGB Parse(string value)
+        public static RGB Parse(string? value)
         {
             if(TryParse(value, out RGB ret) == false)
             {
@@ -164,7 +164,7 @@ namespace PowerArgs
             }
         }
 
-        public static bool TryParse(string value, out RGB ret)
+        public static bool TryParse(string? value, out RGB ret)
         {
             RGBRegex = RGBRegex ?? new Regex(@"^\s*(?<r>\d+)\s*,\s*(?<g>\d+)\s*,\s*(?<b>\d+)\s*$");
             var match = RGBRegex.Match(value);
@@ -189,7 +189,7 @@ namespace PowerArgs
         }
 
         [ArgReviver]
-        public static RGB Revive(string key, string val)
+        public static RGB Revive(string key, string? val)
         {
             if(TryParse(val, out RGB ret))
             {
@@ -377,7 +377,7 @@ namespace PowerArgs
     public static class NullableRGBReviver
     {
         [ArgReviver]
-        public static RGB? Revive(string key, string val)
+        public static RGB? Revive(string key, string? val)
         {
             if (RGB.TryParse(val, out RGB ret))
             {

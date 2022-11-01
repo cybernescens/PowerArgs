@@ -117,7 +117,7 @@ namespace ArgsTests
         {
             Helpers.Run(() =>
             {
-                var args = "TheAction -S SomeOtherArgValue -A 100".Split(' ');
+                string?[] args = "TheAction -S SomeOtherArgValue -A 100".Split(' ');
                 var parsed = Args.Parse<CaseSensitiveArgs>(args);
 
                 Assert.AreEqual("SomeOtherArgValue", parsed.SomeOtherArg);
@@ -130,7 +130,7 @@ namespace ArgsTests
         {
             Helpers.Run(() =>
             {
-                var args = "TheAction -s SomeOtherArgValue -A 100".Split(' ');
+                string?[] args = "TheAction -s SomeOtherArgValue -A 100".Split(' ');
                 var parsed = Args.Parse<CaseSensitiveArgs>(args);
 
                 Assert.AreEqual("SomeOtherArgValue", parsed.SomeOtherArg);
@@ -143,7 +143,7 @@ namespace ArgsTests
         {
             Helpers.Run(() =>
             {
-                var args = "Theaction -S SomeOtherArgValue -A 100".Split(' ');
+                string?[] args = "Theaction -S SomeOtherArgValue -A 100".Split(' ');
                 var parsed = Args.Parse<CaseSensitiveArgs>(args);
 
                 Assert.AreEqual("SomeOtherArgValue", parsed.SomeOtherArg);
@@ -156,7 +156,7 @@ namespace ArgsTests
         {
             Helpers.Run(() =>
             {
-                var args = "TheAction -S SomeOtherArgValue -aninteger 100".Split(' ');
+                string?[] args = "TheAction -S SomeOtherArgValue -aninteger 100".Split(' ');
                 var parsed = Args.Parse<CaseSensitiveArgs>(args);
 
                 Assert.AreEqual("SomeOtherArgValue", parsed.SomeOtherArg);
@@ -169,7 +169,7 @@ namespace ArgsTests
         {
             Helpers.Run(()=>
             {
-                var args = "TheAction /S:SomeOtherArgValue /A:100".Split(' ');
+                string?[] args = "TheAction /S:SomeOtherArgValue /A:100".Split(' ');
 
                 var parsed = Args.Parse<CaseSensitiveArgsSC>(args);
 
@@ -183,7 +183,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = "/someOtherArg:SomeOtherArgValue".Split(' ');
+                string?[] args = "/someOtherArg:SomeOtherArgValue".Split(' ');
                 var parsed = Args.Parse<CaseSensitiveArgs2>(args);
                 Assert.Fail("An exception should have been thrown");
             }
@@ -195,7 +195,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = "/SomeOtherArg:SomeOtherArgValue".Split(' ');
+                string?[] args = "/SomeOtherArg:SomeOtherArgValue".Split(' ');
                 var parsed = Args.Parse<CaseSensitiveArgsInvalidDupeAttributes>(args);
                 Assert.Fail("An exception should have been thrown");
             }

@@ -14,14 +14,14 @@ namespace PowerArgs.Cli
     public class MinimumSizeEnforcerPanel : ConsolePanel
     {
         MinimumSizeEnforcerPanelOptions options;
-        private Label messageLabel;
+        private Label? messageLabel;
         private Lifetime tooSmallLifetime;
         public MinimumSizeEnforcerPanel(MinimumSizeEnforcerPanelOptions options)
         {
             this.options = options;
             IsVisible = false;
             messageLabel = this.Add(new Label() { Text = "Make that screen bigger yo!".ToYellow() }).CenterBoth();
-            this.SubscribeForLifetime(nameof(Bounds), CheckSize, this);
+            this.SubscribeForLifetime(this, nameof(Bounds), CheckSize);
             ZIndex = int.MaxValue;
         }
 
@@ -63,7 +63,7 @@ namespace PowerArgs.Cli
         {
             while(tooSmallLifetime != null && tooSmallLifetime.IsExpired == false)
             {
-                ConsoleString msg = ConsoleString.Empty;
+                ConsoleString? msg = ConsoleString.Empty;
                 if (Width >= 75)
                 {
                     var widthNeeded = options.MinWidth - Width;

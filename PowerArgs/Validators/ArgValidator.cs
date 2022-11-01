@@ -37,7 +37,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="name"></param>
         /// <param name="arg">The value specified on the command line.  If the user specified the property name, but not a value then arg will equal string.Empty.  The value will never be null.</param>
-        public virtual void Validate(string name, ref string arg) { }
+        public virtual void Validate(string name, ref string? arg) { }
 
 
         /// <summary>
@@ -46,6 +46,6 @@ namespace PowerArgs
         ///</summary>
         /// <param name="argument">The argument that the attribute was placed on.</param>
         /// <param name="arg">The value specified on the command line or null if the user didn't actually specify a value for the argument.  If the user specified the argument name, but not a value then arg will equal string.Empty</param>
-        public virtual void ValidateAlways(CommandLineArgument argument, ref string arg) { throw new NotImplementedException(); }
+        public virtual void ValidateAlways(CommandLineArgument argument, ref string? arg) { throw new NotImplementedException(); }
     }
 }

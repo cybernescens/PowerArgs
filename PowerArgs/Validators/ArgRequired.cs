@@ -28,13 +28,13 @@ namespace PowerArgs
         /// A valid command line alias or boolean expression of aliases (and/or/not supported as and '&amp;', or '|', and not '!').
         /// When specified the target argument is only required if the referenced argument(s) were specified on the command line.
         /// </summary>
-        public string If { get; set; }
+        public string? If { get; set; }
 
         /// <summary>
         /// A valid command line alias or boolean expression of aliases (and/or/not supported as and '&amp;', or '|', and not '!').
         /// When specified the target argument is only required if the referenced argument(s) were not specified on the command line.
         /// </summary>
-        public string IfNot { get; set; }
+        public string? IfNot { get; set; }
 
         /// <summary>
         /// Determines if this metadata represents an argument conditionionally required.  This will be true if you've set the If or the IfNot property.
@@ -75,7 +75,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="argument">The argument being populated.  This validator doesn't do anything with it.</param>
         /// <param name="arg">The value specified on the command line or null if it wasn't specified</param>
-        public override void ValidateAlways(CommandLineArgument argument, ref string arg)
+        public override void ValidateAlways(CommandLineArgument argument, ref string? arg)
         {
             if (IsConditionallyRequired)
             {
@@ -175,7 +175,7 @@ namespace PowerArgs
             }
         }
 
-        private void Evaluate(ArgHook.HookContext context, string expressionText, bool not)
+        private void Evaluate(ArgHook.HookContext context, string? expressionText, bool not)
         {
             try
             {

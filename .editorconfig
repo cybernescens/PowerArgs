@@ -1,0 +1,32 @@
+[*]
+indent_style = space
+indent_size = 4
+tab_width = 2
+
+[*.cs]
+blank_lines_around_single_line_property = 0
+csharp_blank_lines_around_single_line_property = 0
+
+blank_lines_around_auto_property = 0
+resharper_blank_lines_around_auto_property = 0
+
+resharper_csharp_braces_for_ifelse = required_for_multiline_statement
+csharp_braces_for_ifelse = required_for_multiline_statement
+
+resharper_braces_for_ifelse = required_for_multiline_statement
+braces_for_ifelse = required_for_multiline_statement
+
+resharper_csharp_braces_for_while = required_for_multiline_statement
+csharp_braces_for_while = required_for_multiline_statement
+resharper_braces_for_while = required_for_multiline_statement
+braces_for_while = required_for_multiline_statement
+
+#dotnet_naming_rule.private_members_with_underscore.symbols  = private_fields
+#dotnet_naming_rule.private_members_with_underscore.style    = prefix_underscore
+#dotnet_naming_rule.private_members_with_underscore.severity = suggestion
+
+#dotnet_naming_symbols.private_fields.applicable_kinds           = field
+#dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+#dotnet_naming_style.prefix_underscore.capitalization = camel_case
+#dotnet_naming_style.prefix_underscore.required_prefix = _

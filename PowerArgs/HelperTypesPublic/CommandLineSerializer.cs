@@ -16,7 +16,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="value">the object to serialize</param>
         /// <returns>the serialized object</returns>
-        public virtual string Serialize(object value)
+        public virtual string? Serialize(object value)
         {
             if (value is ConsoleString)
             {
@@ -67,7 +67,7 @@ namespace PowerArgs
         public static string Serialize(object o, List<CommandLineArgument> arguments)
         {
             var ret = "";
-            var validProps = new Dictionary<string, CommandLineArgument>(StringComparer.OrdinalIgnoreCase);
+            var validProps = new Dictionary<string?, CommandLineArgument>(StringComparer.OrdinalIgnoreCase);
             foreach (var arg in arguments)
             {
                 var source = arg.Source as PropertyInfo;

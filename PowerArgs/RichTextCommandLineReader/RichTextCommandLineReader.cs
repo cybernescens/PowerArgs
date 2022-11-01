@@ -136,7 +136,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="initialBuffer">Optionally seed the prompt with an initial value that the end user can modify</param>
         /// <returns>the command line that was read</returns>
-        public string[] ReadCommandLine(ConsoleString initialBuffer = null)
+        public string?[] ReadCommandLine(ConsoleString initialBuffer = null)
         {
             var line = ReadLine(initialBuffer).ToString();
             var ret = Args.Convert(line);

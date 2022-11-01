@@ -1,19 +1,18 @@
-﻿namespace PowerArgs.Cli
-{
-    internal class DebugPanel : LogTailControl
-    {
-        public static readonly RGB ForegroundColor = RGB.Black;
-        public static readonly RGB BackgroundColor = RGB.DarkYellow;
+﻿namespace PowerArgs.Cli;
 
-        public DebugPanel()
-        {
-            this.Foreground = ForegroundColor;
-            this.Background = BackgroundColor;
-            this.Ready.SubscribeOnce(() =>
-            {
+internal class DebugPanel : LogTailControl
+{
+    public static readonly RGB ForegroundColor = RGB.Black;
+    public static readonly RGB BackgroundColor = RGB.DarkYellow;
+
+    public DebugPanel()
+    {
+        Foreground = ForegroundColor;
+        Background = BackgroundColor;
+        Ready.SubscribeOnce(
+            () => {
                 Application.ConsoleOutTextReady
-                .SubscribeForLifetime(s => Append(s), this);
+                    .SubscribeForLifetime(this, Append);
             });
-        }
     }
 }

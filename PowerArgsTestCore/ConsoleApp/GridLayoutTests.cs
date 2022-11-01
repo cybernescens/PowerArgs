@@ -19,20 +19,20 @@ namespace ArgsTests.CLI.Controls
 
             app.InvokeNextCycle(async () =>
             {
-                var gridLayout = app.LayoutRoot.Add(new GridLayout(new GridLayoutOptions()
+                GridLayout? gridLayout = app.LayoutRoot.Add(new GridLayout(new GridLayoutOptions()
                 {
                     Columns = new List<GridColumnDefinition>()
-                {
-                    new GridColumnDefinition(){ Width = 5, Type = GridValueType.Pixels },
-                    new GridColumnDefinition(){ Width= 2, Type = GridValueType.RemainderValue },
-                    new GridColumnDefinition(){ Width = 2, Type = GridValueType.RemainderValue },
-                },
+                    {
+                        new GridColumnDefinition(){ Width = 5, Type = GridValueType.Pixels },
+                        new GridColumnDefinition(){ Width= 2, Type = GridValueType.RemainderValue },
+                        new GridColumnDefinition(){ Width = 2, Type = GridValueType.RemainderValue },
+                    },
                     Rows = new List<GridRowDefinition>()
-                {
-                     new GridRowDefinition(){ Height = 1, Type = GridValueType.Pixels },
-                     new GridRowDefinition(){ Height= 2, Type = GridValueType.RemainderValue },
-                     new GridRowDefinition(){ Height = 1, Type = GridValueType.Pixels },
-                }
+                    {
+                        new GridRowDefinition(){ Height = 1, Type = GridValueType.Pixels },
+                        new GridRowDefinition(){ Height= 2, Type = GridValueType.RemainderValue },
+                        new GridRowDefinition(){ Height = 1, Type = GridValueType.Pixels },
+                    }
                 })).Fill();
 
                 var colorWheel = new List<ConsoleColor>()

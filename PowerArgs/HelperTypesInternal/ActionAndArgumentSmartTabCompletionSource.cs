@@ -9,7 +9,7 @@ namespace PowerArgs
         private SimpleTabCompletionSource globalArgumentSource;
         private Dictionary<CommandLineAction, SimpleTabCompletionSource> actionSpecificArgumentSources;
 
-        public bool TryComplete(TabCompletionContext context, out string completion)
+        public bool TryComplete(TabCompletionContext context, out string? completion)
         {
             if(actionSource == null)
             {

@@ -30,15 +30,15 @@ namespace ArgsTests
             [StickyArg]
             public int Sticky { get; set; }
 
-            public void Save(Dictionary<string, string> stickyArgs, string pathInfo)
+            public void Save(Dictionary<string?, string> stickyArgs, string pathInfo)
             {
                 SaveCount++;
             }
 
-            public Dictionary<string, string> Load(string pathInfo)
+            public Dictionary<string?, string> Load(string pathInfo)
             {
                 LoadCount++;
-                return new Dictionary<string, string> { { "Sticky", "999"}, };
+                return new Dictionary<string?, string> { { "Sticky", "999"}, };
             }
         }
 
@@ -57,9 +57,9 @@ namespace ArgsTests
             if (Directory.Exists(tempDir) == false) Directory.CreateDirectory(tempDir);
             if (File.Exists(tempFile)) File.Delete(tempFile);
 
-            var args = new string[] { "-s", "12345" };
+            var args = new string?[] { "-s", "12345" };
             Args.Parse<SampleArgs>(args);
-            var remembered = Args.Parse<SampleArgs>(new string[0]);
+            var remembered = Args.Parse<SampleArgs>(new string?[0]);
             Assert.AreEqual(12345, remembered.Sticky);
         }
 
@@ -67,7 +67,7 @@ namespace ArgsTests
         public void TestStickyArgsWithCustomPersistence()
         {
             int saveCount = SampleStickyArgs2.SaveCount, loadCount = SampleStickyArgs2.LoadCount;
-            var args = new string[] { };
+            var args = new string?[] { };
             var parsed = Args.Parse<SampleStickyArgs2>(args);
             Assert.AreEqual(999, parsed.Sticky);
             Assert.IsTrue(SampleStickyArgs2.SaveCount > saveCount);
@@ -79,7 +79,7 @@ namespace ArgsTests
         {
             try
             {
-                var args = new string[] { };
+                var args = new string?[] { };
                 var parsed = Args.Parse<SampleStickyArgsInvalid>(args);
                 Assert.Fail("An exception should have been thrown");
             }

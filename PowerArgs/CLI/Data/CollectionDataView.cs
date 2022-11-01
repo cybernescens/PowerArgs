@@ -1,36 +1,28 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿namespace PowerArgs.Cli;
 
-namespace PowerArgs.Cli
+public class CollectionDataView
 {
-    public class CollectionDataView
+    public CollectionDataView(List<object?> items, bool isCompletelyLoaded, int rowOffset, int pageLength)
     {
-        public bool IsViewComplete { get; private set; }
-        public bool IsViewEndOfData { get; private set; }
-        public int RowOffset { get; private set; }
-        public IReadOnlyList<object> Items { get; private set; }
+        Items = items.AsReadOnly();
+        IsViewComplete = isCompletelyLoaded;
+        IsViewEndOfData = rowOffset + pageLength >= items.Count - 1;
+        RowOffset = rowOffset;
+    }
 
-        public CollectionDataView(List<object> items, bool isCompletelyLoaded, bool isEndOfData, int rowOffset)
-        {
-            this.Items = items.AsReadOnly();
-            this.IsViewComplete = isCompletelyLoaded;
-            this.IsViewEndOfData = isEndOfData;
-            this.RowOffset = rowOffset;
-        }
+    public bool IsViewComplete { get; }
+    public bool IsViewEndOfData { get; }
+    public int RowOffset { get; }
+    public IReadOnlyList<object?> Items { get; }
 
-        public bool IsLastKnownItem(object item)
-        {
-            if (Items.Count == 0) return item == null;
-            if (object.ReferenceEquals(item, Items.Last()) == false) return false;
+    public bool IsLastKnownItem(object? item)
+    {
+        if (Items.Count < 1) 
+            return item == null;
 
-            if (IsViewComplete == false || IsViewEndOfData)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
+        if (ReferenceEquals(item, Items[^1]) == false)
+            return false;
+
+        return IsViewComplete == false || IsViewEndOfData;
     }
 }

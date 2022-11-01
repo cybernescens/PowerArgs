@@ -1,29 +1,29 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PowerArgs;
 using PowerArgs.Cli;
-using System;
-using System.Threading.Tasks;
 
-namespace ArgsTests.CLI.Controls
+namespace ArgsTests.CLI.Controls;
+
+[TestClass]
+[TestCategory(Categories.ConsoleApp)]
+public class DialogTests
 {
-    [TestClass]
-    [TestCategory(Categories.ConsoleApp)]
-    public class DialogTests
+    public TestContext TestContext { get; set; }
+
+    [TestMethod]
+    public void ShowMessageBasicString()
     {
-        public TestContext TestContext { get; set; }
+        var app = new CliTestHarness(TestContext, 80, 20, true);
 
-        [TestMethod]
-        public void ShowMessageBasicString()
-        {
-            var app = new CliTestHarness(this.TestContext, 80,20, true);
-
-            app.InvokeNextCycle(async () =>
-            {
+        app.InvokeNextCycle(
+            async () => {
                 Task dialogTask;
 
                 // show hello world message, wait for a paint, then take a keyframe of the screen, which 
                 // should have the dialog shown
-                dialogTask = Dialog.ShowMessage("Hello world");
+                dialogTask = Dialog.ShowMessage(app, "Hello world");
                 await app.PaintAndRecordKeyFrameAsync();
                 Assert.IsFalse(dialogTask.IsFulfilled());
 
@@ -34,25 +34,25 @@ namespace ArgsTests.CLI.Controls
                 app.Stop();
             });
 
-            app.Start().Wait();
-            app.AssertThisTestMatchesLKG();
-        }
+        app.Start().Wait();
+        app.AssertThisTestMatchesLKG();
+    }
 
-        [TestMethod]
-        public void ShowYesConfirmation()
-        {
-            var app = new CliTestHarness(this.TestContext, 80, 20, true);
+    [TestMethod]
+    public void ShowYesConfirmation()
+    {
+        var app = new CliTestHarness(TestContext, 80, 20, true);
 
-            app.InvokeNextCycle(async () =>
-            {
+        app.InvokeNextCycle(
+            async () => {
                 Task dialogTask;
 
-                dialogTask = Dialog.ShowYesConfirmation("Yes or no, no will be clicked");
+                dialogTask = Dialog.ShowYesConfirmation(app, "Yes or no, no will be clicked");
                 await app.PaintAndRecordKeyFrameAsync();
                 Assert.IsFalse(dialogTask.IsFulfilled());
 
                 var noRejected = false;
-                dialogTask.Fail((ex) => noRejected = true);
+                dialogTask.Fail(ex => noRejected = true);
 
                 // simulate an enter keypress, which should clear the dialog, but should not trigger 
                 // the Task to resolve since yes was not chosen
@@ -61,7 +61,7 @@ namespace ArgsTests.CLI.Controls
                 Assert.IsTrue(dialogTask.IsFulfilled());
                 Assert.IsTrue(noRejected); // the Task should reject on no
 
-                dialogTask = Dialog.ShowYesConfirmation("Yes or no, yes will be clicked");
+                dialogTask = Dialog.ShowYesConfirmation(app, "Yes or no, yes will be clicked");
                 await app.PaintAndRecordKeyFrameAsync();
                 Assert.IsFalse(dialogTask.IsFulfilled());
                 // give focus to the yes option
@@ -75,23 +75,23 @@ namespace ArgsTests.CLI.Controls
                 app.Stop();
             });
 
-            app.Start().Wait();
-            app.AssertThisTestMatchesLKG();
-        }
+        app.Start().Wait();
+        app.AssertThisTestMatchesLKG();
+    }
 
+    [TestMethod]
+    public void ShowTextInput()
+    {
+        var app = new CliTestHarness(TestContext, 80, 20, true);
 
-        [TestMethod]
-        public void ShowTextInput()
-        {
-            var app = new CliTestHarness(this.TestContext, 80, 20, true);
-
-            app.InvokeNextCycle(async () =>
-            {
+        app.InvokeNextCycle(
+            async () => {
                 Task<ConsoleString> dialogTask;
-                dialogTask = Dialog.ShowRichTextInput(new RichTextDialogOptions()
-                {
-                    Message = "Rich text input prompt text".ToGreen(),
-                });
+                dialogTask = Dialog.ShowRichTextInput(
+                    new RichTextDialogOptions(app) {
+                        Message = "Rich text input prompt text".ToGreen()
+                    });
+
                 await app.PaintAndRecordKeyFrameAsync();
                 Assert.IsFalse(dialogTask.IsFulfilled());
                 app.SendKey(new ConsoleKeyInfo('A', ConsoleKey.A, false, false, false));
@@ -111,19 +111,19 @@ namespace ArgsTests.CLI.Controls
                 app.Stop();
             });
 
-            app.Start().Wait();
-            app.AssertThisTestMatchesLKG();
-        }
+        app.Start().Wait();
+        app.AssertThisTestMatchesLKG();
+    }
 
-        [TestMethod]
-        public void ShowEnumOptions()
-        {
-            var app = new CliTestHarness(this.TestContext, 80, 20, true);
+    [TestMethod]
+    public void ShowEnumOptions()
+    {
+        var app = new CliTestHarness(TestContext, 80, 20, true);
 
-            app.InvokeNextCycle(async () =>
-            {
+        app.InvokeNextCycle(
+            async () => {
                 Task<ConsoleColor?> dialogTask;
-                dialogTask = Dialog.ShowEnumOptions<ConsoleColor>("Enum option picker".ToGreen());
+                dialogTask = Dialog.ShowEnumOptions<ConsoleColor>(app, "Enum option picker".ToGreen());
                 await app.PaintAndRecordKeyFrameAsync();
                 Assert.IsFalse(dialogTask.IsFulfilled());
 
@@ -136,13 +136,12 @@ namespace ArgsTests.CLI.Controls
                 app.SendKey(new ConsoleKeyInfo(' ', ConsoleKey.Enter, false, false, false));
                 await app.PaintAndRecordKeyFrameAsync();
 
-                var enumValue = (await dialogTask);
+                var enumValue = await dialogTask;
                 Assert.AreEqual(ConsoleColor.DarkGreen, enumValue);
                 app.Stop();
             });
 
-            app.Start().Wait();
-            app.AssertThisTestMatchesLKG();
-        }
+        app.Start().Wait();
+        app.AssertThisTestMatchesLKG();
     }
 }

@@ -1,138 +1,123 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
+﻿namespace PowerArgs.Cli;
 
-namespace PowerArgs.Cli
+/// <summary>
+///     A control that lets the user provide text input
+/// </summary>
+public class TextBox : ConsoleControl
 {
+    private static readonly TimeSpan BlinkInterval = TimeSpan.FromMilliseconds(500);
+    private bool blinkState;
+
+    private SetIntervalHandle blinkTimerHandle;
+
     /// <summary>
-    /// A control that lets the user provide text input
+    ///     Creates a new text box
     /// </summary>
-    public class TextBox : ConsoleControl
+    public TextBox()
     {
-        private static readonly TimeSpan BlinkInterval = TimeSpan.FromMilliseconds(500);
+        RichTextEditor = new RichTextEditor();
+        Height = 1;
+        Width = 15;
+        CanFocus = true;
+        Focused.SubscribeForLifetime(this, TextBox_Focused);
+        Unfocused.SubscribeForLifetime(this, TextBox_Unfocused);
+        RichTextEditor.SubscribeForLifetime(this, nameof(RichTextEditor.CurrentValue), TextValueChanged);
+        KeyInputReceived.SubscribeForLifetime(this, OnKeyInputReceived);
+    }
 
-        private RichTextEditor textState;
-        private bool blinkState;
+    /// <summary>
+    ///     Gets the editor object that controls the rich text capabilities of the text box
+    /// </summary>
+    public RichTextEditor RichTextEditor { get; }
 
-        private SetIntervalHandle blinkTimerHandle;
-
-        /// <summary>
-        /// Gets the editor object that controls the rich text capabilities of the text box
-        /// </summary>
-        public RichTextEditor RichTextEditor
-        {
-            get
-            {
-                return textState;
-            }
+    /// <summary>
+    ///     Gets or sets the value in the text box
+    /// </summary>
+    public ConsoleString Value
+    {
+        get => RichTextEditor.CurrentValue ?? ConsoleString.Empty;
+        set {
+            RichTextEditor.CurrentValue = value;
+            RichTextEditor.CursorPosition = value.Length;
         }
+    }
 
-        /// <summary>
-        /// Gets or sets the value in the text box
-        /// </summary>
-        public ConsoleString Value
-        {
-            get
-            {
-                return textState.CurrentValue;
-            }
-            set
-            {
-                textState.CurrentValue = value;
-                textState.CursorPosition = value.Length;
-            }
-        }
+    /// <summary>
+    ///     Gets or sets a flag that enables or disables the blinking cursor that appears when the text box has focus
+    /// </summary>
+    public bool BlinkEnabled { get; set; } = true;
 
-        /// <summary>
-        /// Gets or sets a flag that enables or disables the blinking cursor that appears when the text box has focus
-        /// </summary>
-        public bool BlinkEnabled { get; set; } = true;
+    public bool IsInputBlocked { get; set; }
 
-        public bool IsInputBlocked { get; set; }
+    private void TextValueChanged() { FirePropertyChanged(nameof(Value)); }
 
-        /// <summary>
-        /// Creates a new text box
-        /// </summary>
-        public TextBox()
-        {
-            this.textState = new RichTextEditor();
-            this.Height = 1;
-            this.Width = 15;
-            CanFocus = true;
-            this.Focused.SubscribeForLifetime(TextBox_Focused, this);
-            this.Unfocused.SubscribeForLifetime(TextBox_Unfocused, this);
-            textState.SubscribeForLifetime(nameof(textState.CurrentValue), TextValueChanged, this);
-            KeyInputReceived.SubscribeForLifetime(OnKeyInputReceived, this);
-        }
-
-        private void TextValueChanged()
-        {
-            FirePropertyChanged(nameof(Value));
-        }
-
-        private void TextBox_Focused()
-        {
-            blinkState = true;
-            blinkTimerHandle = Application.SetInterval(() =>
-            {
+    private void TextBox_Focused()
+    {
+        blinkState = true;
+        blinkTimerHandle = Application.SetInterval(
+            () => {
                 if (HasFocus == false) return;
+
                 blinkState = !blinkState;
                 Application.RequestPaint();
-            }, BlinkInterval);
+            },
+            BlinkInterval);
+    }
+
+    private void TextBox_Unfocused()
+    {
+        blinkTimerHandle.Dispose();
+        blinkState = false;
+    }
+
+    private void OnKeyInputReceived(ConsoleKeyInfo info)
+    {
+        if (IsInputBlocked) return;
+
+        ConsoleCharacter? prototype = Value.Length == 0 ? null : Value[Value.Length - 1];
+        RichTextEditor.RegisterKeyPress(info, prototype);
+        blinkState = true;
+        Application.ChangeInterval(blinkTimerHandle, BlinkInterval);
+    }
+
+    /// <summary>
+    ///     paints the text box
+    /// </summary>
+    /// <param name="context"></param>
+    protected override void OnPaint(ConsoleBitmap context)
+    {
+        var toPaint = RichTextEditor.CurrentValue;
+
+        var offset = 0;
+        if (toPaint.Length >= Width && RichTextEditor.CursorPosition > Width - 1)
+        {
+            offset = RichTextEditor.CursorPosition + 1 - Width;
+            toPaint = toPaint.Substring(offset);
         }
 
-        private void TextBox_Unfocused()
-        {
-            blinkTimerHandle.Dispose();
-            blinkState = false;
-        }
+        var bgTransformed = new List<ConsoleCharacter>();
 
-        private void OnKeyInputReceived(ConsoleKeyInfo info)
-        {
-            if (IsInputBlocked) return;
-            ConsoleCharacter? prototype = this.Value.Length == 0 ? (ConsoleCharacter?)null : this.Value[this.Value.Length - 1];
-            textState.RegisterKeyPress(info, prototype);
-            blinkState = true;
-            Application.ChangeInterval(blinkTimerHandle, BlinkInterval);
-        }
-
-        /// <summary>
-        /// paints the text box
-        /// </summary>
-        /// <param name="context"></param>
-        protected override void OnPaint(ConsoleBitmap context)
-        {
-            var toPaint = textState.CurrentValue;
-
-            var offset = 0;
-            if(toPaint.Length >= Width && textState.CursorPosition > Width-1)
+        foreach (var c in toPaint)
+            if (c.BackgroundColor == ConsoleString.DefaultBackgroundColor &&
+                Background != ConsoleString.DefaultBackgroundColor)
             {
-                offset = (textState.CursorPosition + 1) - Width;
-                toPaint = toPaint.Substring(offset);
+                bgTransformed.Add(new ConsoleCharacter(c.Value, Foreground, Background));
+            }
+            else
+            {
+                bgTransformed.Add(c);
             }
 
-            var bgTransformed = new List<ConsoleCharacter>();
+        context.DrawString(new ConsoleString(bgTransformed), 0, 0);
 
-            foreach(var c in toPaint)
-            {
-                if(c.BackgroundColor == ConsoleString.DefaultBackgroundColor && Background != ConsoleString.DefaultBackgroundColor)
-                {
-                    bgTransformed.Add(new ConsoleCharacter(c.Value, Foreground, Background));
-                }
-                else
-                {
-                    bgTransformed.Add(c);
-                }
-            }
+        if (blinkState && BlinkEnabled)
+        {
+            var blinkChar = RichTextEditor.CursorPosition >= toPaint.Length
+                ? ' '
+                : toPaint[RichTextEditor.CursorPosition].Value;
 
-            context.DrawString(new ConsoleString(bgTransformed), 0, 0);
-
-            if (blinkState && BlinkEnabled)
-            {
-                char blinkChar = textState.CursorPosition >= toPaint.Length ? ' ' : toPaint[textState.CursorPosition].Value;
-                var pen = new ConsoleCharacter(blinkChar, DefaultColors.FocusContrastColor, DefaultColors.FocusColor);
-                context.DrawPoint(pen, textState.CursorPosition - offset, 0);
-            }
+            var pen = new ConsoleCharacter(blinkChar, DefaultColors.FocusContrastColor, DefaultColors.FocusColor);
+            context.DrawPoint(pen, RichTextEditor.CursorPosition - offset, 0);
         }
     }
 }

@@ -24,16 +24,17 @@ namespace ArgsTests.CLI.Physics
           
 
                 var justUpdated = false;
-                spaceTimePanel.AfterUpdate.SubscribeForLifetime(() => justUpdated = true, app);
+                spaceTimePanel.AfterUpdate.SubscribeForLifetime(app, () => justUpdated = true);
 
-                app.AfterPaint.SubscribeForLifetime(() =>
-                {
-                    if (justUpdated)
+                app.AfterPaint.SubscribeForLifetime(app,
+                    () =>
                     {
-                        app.RecordKeyFrame();
-                        justUpdated = false;
-                    }
-                }, app);
+                        if (justUpdated)
+                        {
+                            app.RecordKeyFrame();
+                            justUpdated = false;
+                        }
+                    });
 
                 spaceTimePanel.SpaceTime.InvokeNextCycle(async () =>
                 {

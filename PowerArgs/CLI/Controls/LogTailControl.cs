@@ -6,20 +6,21 @@ namespace PowerArgs.Cli
     public class LogTailControl : ConsolePanel
     {
         public int MaxLines { get; set; } = 1000;
-        private ScrollablePanel scrollPanel;
+        private ScrollablePanel? scrollPanel;
 
-        private Label logLabel;
+        private Label? logLabel;
 
-        private List<ConsoleString> logLines = new List<ConsoleString>() { ConsoleString.Empty };
+        private List<ConsoleString?> logLines = new List<ConsoleString?>() { ConsoleString.Empty };
         public LogTailControl()
         {
             scrollPanel = Add(new ScrollablePanel()).Fill();
             logLabel = scrollPanel.ScrollableContent.Add(new Label() { Text = ConsoleString.Empty, Mode = LabelRenderMode.ManualSizing }).FillHorizontally();
-            this.SubscribeForLifetime(nameof(Background),() => 
-            {
-                scrollPanel.Background = Background;
-                logLabel.Background = Background;
-            }, this);
+            this.SubscribeForLifetime(this, nameof(Background),
+                () => 
+                {
+                    scrollPanel.Background = Background;
+                    logLabel.Background = Background;
+                });
         }
 
         public void AppendLine(ConsoleString str) => Append(str + "\n".ToConsoleString());

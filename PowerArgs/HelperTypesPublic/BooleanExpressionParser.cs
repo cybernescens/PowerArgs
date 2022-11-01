@@ -16,7 +16,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="expressionText">The expression to parse</param>
         /// <returns>The parsed expression</returns>
-        public static IBooleanExpression Parse(string expressionText)
+        public static IBooleanExpression Parse(string? expressionText)
         {
             List<Token> tokens = Tokenize(expressionText);
             IBooleanExpression tree = BuildTree(tokens);
@@ -30,7 +30,7 @@ namespace PowerArgs
         /// <param name="val">the expression text</param>
         /// <returns></returns>
         [ArgReviver]
-        public static IBooleanExpression Revive(string key, string val)
+        public static IBooleanExpression Revive(string key, string? val)
         {
             try
             {
@@ -152,7 +152,7 @@ namespace PowerArgs
         }
 
         private static BooleanExpressionTokenizer tokenizer = new BooleanExpressionTokenizer();
-        private static List<Token> Tokenize(string expressionText)
+        private static List<Token> Tokenize(string? expressionText)
         {
             return tokenizer.Tokenize(expressionText);
         }
@@ -196,7 +196,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="variableName"></param>
         /// <returns></returns>
-        bool ResolveBoolean(string variableName);
+        bool ResolveBoolean(string? variableName);
     }
 
     /// <summary>
@@ -207,13 +207,13 @@ namespace PowerArgs
         /// <summary>
         /// The function that knows how to resolve boolean variables
         /// </summary>
-        public Func<string, bool> ResolverImpl { get; private set; }
+        public Func<string?, bool> ResolverImpl { get; private set; }
 
         /// <summary>
         /// Creates a new variable resolver given an implementation as a function.
         /// </summary>
         /// <param name="resolverImpl"></param>
-        public FuncBooleanVariableResolver(Func<string, bool> resolverImpl)
+        public FuncBooleanVariableResolver(Func<string?, bool> resolverImpl)
         {
             if (resolverImpl == null) throw new ArgumentNullException("resolverImpl cannot be null");
             this.ResolverImpl = resolverImpl;
@@ -224,7 +224,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="variableName"></param>
         /// <returns></returns>
-        public bool ResolveBoolean(string variableName)
+        public bool ResolveBoolean(string? variableName)
         {
             if (variableName == null) throw new ArgumentNullException("Variable name cannot be null");
             return ResolverImpl(variableName);
@@ -233,9 +233,9 @@ namespace PowerArgs
 
     internal class DictionaryBooleanVariableResolver : IBooleanVariableResolver
     {
-        public Dictionary<string, bool> InnerDictionary { get; private set; }
+        public Dictionary<string?, bool> InnerDictionary { get; private set; }
 
-        public DictionaryBooleanVariableResolver(Dictionary<string, bool> innerDictionary)
+        public DictionaryBooleanVariableResolver(Dictionary<string?, bool> innerDictionary)
         {
             if (innerDictionary == null)
             {
@@ -244,7 +244,7 @@ namespace PowerArgs
             this.InnerDictionary = innerDictionary;
         }
 
-        public bool ResolveBoolean(string variableName)
+        public bool ResolveBoolean(string? variableName)
         {
             bool val;
             if (InnerDictionary.TryGetValue(variableName, out val) == false)
@@ -272,7 +272,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="variableValues">The current state of variables</param>
         /// <returns>the result of the expression, true or false</returns>
-        bool Evaluate(Dictionary<string, bool> variableValues);
+        bool Evaluate(Dictionary<string?, bool> variableValues);
 
         /// <summary>
         /// Gets or sets a flag indicating that the expression should be negated
@@ -293,7 +293,7 @@ namespace PowerArgs
         /// <summary>
         /// The name of the variable referenced by this node
         /// </summary>
-        public string VariableName { get; set; }
+        public string? VariableName { get; set; }
 
         /// <summary>
         /// Uses the given resolver to resolve the target boolean variable
@@ -311,7 +311,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="variableValues">The value of variables that appear in the expression</param>
         /// <returns>True if the expression was true, false otherwise</returns>
-        public bool Evaluate(Dictionary<string, bool> variableValues)
+        public bool Evaluate(Dictionary<string?, bool> variableValues)
         {
             return Evaluate(new DictionaryBooleanVariableResolver(variableValues));
         }
@@ -320,7 +320,7 @@ namespace PowerArgs
         /// Gets a string representation of the variable
         /// </summary>
         /// <returns>a string representation of the variable</returns>
-        public override string ToString()
+        public override string? ToString()
         {
             var ret = "";
             if (Not) ret += "!";
@@ -364,7 +364,7 @@ namespace PowerArgs
         /// </summary>
         /// <param name="variableValues">The value of variables that appear in the expression</param>
         /// <returns>True if the expression was true, false otherwise</returns>
-        public bool Evaluate(Dictionary<string, bool> variableValues)
+        public bool Evaluate(Dictionary<string?, bool> variableValues)
         {
             return Evaluate(new DictionaryBooleanVariableResolver(variableValues));
         }

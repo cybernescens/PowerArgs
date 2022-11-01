@@ -13,9 +13,9 @@ namespace PowerArgs.Samples
     {
         public ResourceMonitor() => InvokeNextCycle(InitAsync);
 
-        private GridLayout layout;
-        private ListGrid<IResource> listView;
-        private XYChart chart;
+        private GridLayout? layout;
+        private ListGrid<IResource>? listView;
+        private XYChart? chart;
 
         private XYChartOptions chartOptions;
         private ListGridOptions<IResource> listOptions;
@@ -135,7 +135,7 @@ namespace PowerArgs.Samples
 
             });
             gridSelectionHandler();
-            listView.SelectionChanged.SubscribeForLifetime(gridSelectionHandler, this);
+            listView.SelectionChanged.SubscribeForLifetime(this, gridSelectionHandler);
         }
 
         private void InitMinSizeEnforcer()
@@ -169,7 +169,7 @@ namespace PowerArgs.Samples
 
         float? MaxValue { get; }
 
-        ConsoleString GetFormattedSample();
+        ConsoleString? GetFormattedSample();
     }
 
     public class CPUResource : IResource
@@ -183,7 +183,7 @@ namespace PowerArgs.Samples
         private float lastSample;
 
     
-        public ConsoleString GetFormattedSample()
+        public ConsoleString? GetFormattedSample()
         {
             return (ConsoleMath.Round(lastSample) + " %").ToConsoleString(lastSample < 50 ? ConsoleColor.Green : lastSample < 90 ? ConsoleColor.Yellow : ConsoleColor.Red);
         }
@@ -204,7 +204,7 @@ namespace PowerArgs.Samples
         private Random rand = new Random();
         private float lastSample;
  
-        public ConsoleString GetFormattedSample()
+        public ConsoleString? GetFormattedSample()
         {
             return (String.Format("{0:n0}", lastSample) + " MB").ToConsoleString(lastSample > 1000 ? ConsoleColor.Green : lastSample > 500 ? ConsoleColor.Yellow : ConsoleColor.Red);
         }
