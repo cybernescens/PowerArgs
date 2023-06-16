@@ -3,6 +3,9 @@ indent_style = space
 indent_size = 4
 tab_width = 2
 
+[*.csproj]
+indent_size = 2
+
 [*.cs]
 blank_lines_around_single_line_property = 0
 csharp_blank_lines_around_single_line_property = 0

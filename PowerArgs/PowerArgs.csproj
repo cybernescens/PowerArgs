@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-      <LangVersion>Preview</LangVersion>
+    <LangVersion>Preview</LangVersion>
     <Version>3.7</Version>
     <Authors>Adam Abdelhamed</Authors>
     <Company>Adam Abdelhamed</Company>
@@ -33,6 +33,6 @@
   <ItemGroup>
     <Folder Include="HelperTypesPublic\Tos\" />
   </ItemGroup>
- 
+
 
 </Project>

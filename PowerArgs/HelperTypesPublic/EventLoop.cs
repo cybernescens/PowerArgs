@@ -125,7 +125,7 @@ public class EventLoop : Lifetime
                         continue;
                     }
 
-                    if (pendItem.Work.IsFinished && pendItem.Work.IsFailed)
+                    if (pendItem.Work is { IsFinished: true, IsFailed: true })
                     {
                         switch (HandleWorkItemException(IsDrainingOrDrained, pendItem.Work.Exception, out var rethrow))
                         {
@@ -160,7 +160,7 @@ public class EventLoop : Lifetime
                         continue;
                     }
 
-                    if (cycleItem.Work.IsFinished && cycleItem.Work.IsFailed)
+                    if (cycleItem.Work is { IsFinished: true, IsFailed: true })
                     {
                         switch (HandleWorkItemException(IsDrainingOrDrained, cycleItem.Work.Exception, out var rethrow))
                         {

@@ -1,27 +1,19 @@
 ﻿using PowerArgs;
 using PowerArgs.Cli;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ArgsTests.CLI
 {
     public class CliUnitTestConsole : IConsoleProvider
     {
         public ConsoleColor BackgroundColor { get; set; }
+        public ConsoleColor ForegroundColor { get; set; }
 
         public int BufferWidth { get; set; }
-
         public int WindowHeight { get; set; }
         public int WindowWidth { get; set; }
         public int CursorLeft { get; set; }
-
         public int CursorTop { get; set; }
-
-        public ConsoleColor ForegroundColor { get; set; }
 
         public CliKeyboardInputQueue Input { get; private set; }
         public ConsoleBitmap Buffer { get; private set; }
@@ -34,14 +26,8 @@ namespace ArgsTests.CLI
             Clear();
         }
 
-        public bool KeyAvailable
-        {
-            get
-            {
-                return Input.KeyAvailable;
-            }
-        }
-        
+        public bool KeyAvailable => Input.KeyAvailable;
+
         public void Clear()
         {
             Buffer = new ConsoleBitmap(this.BufferWidth, this.WindowHeight);
@@ -50,37 +36,24 @@ namespace ArgsTests.CLI
             this.CursorTop = 0;
         }
 
-        public int Read()
-        {
-            return (int)ReadKey().KeyChar;
-        }
+        public int Read() => ReadKey().KeyChar;
 
-        public ConsoleKeyInfo ReadKey()
-        {
-            var read = Input.ReadKey();
-            return read;
-        }
+        public ConsoleKeyInfo ReadKey() => Input.ReadKey();
 
-        public ConsoleKeyInfo ReadKey(bool intercept)
-        {
-            return ReadKey();
-        }
+        public ConsoleKeyInfo ReadKey(bool intercept) => ReadKey();
 
         public string ReadLine()
         {
-            string ret = null;
-            
-            while(true)
+            var ret = string.Empty;
+
+            while (true)
             {
                 var key = ReadKey();
-                if(key.KeyChar == '\r' || key.KeyChar == '\n')
-                {
+                
+                if (key.KeyChar is '\r' or '\n')
                     return ret;
-                }
-                else
-                {
-                    ret += key.KeyChar;
-                }
+
+                ret += key.KeyChar;
             }
         }
 
@@ -89,11 +62,12 @@ namespace ArgsTests.CLI
             var str = new string(buffer, 0, length);
             Write(str);
         }
+
         public void Write(in ConsoleCharacter consoleCharacter)
         {
             Buffer.DrawPoint(consoleCharacter, CursorLeft, CursorTop);
 
-            if(CursorLeft == BufferWidth - 1)
+            if (CursorLeft == BufferWidth - 1)
             {
                 CursorLeft = 0;
                 CursorTop++;
@@ -106,15 +80,16 @@ namespace ArgsTests.CLI
 
         public void Write(ConsoleString? consoleString)
         {
-            foreach(var c in consoleString)
-            {
+            if (consoleString == null)
+                return;
+
+            foreach (var c in consoleString) 
                 Write(c);
-            }
         }
 
         public void Write(object? output)
         {
-            Write(((string)(output == null ? "" : output.ToString())).ToConsoleString());
+            Write((output == null ? string.Empty : output.ToString()).ToConsoleString());
         }
 
         public void WriteLine()

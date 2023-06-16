@@ -85,8 +85,8 @@ Alic...      Two Microsoft     The wife of the author of PowerArgs, the world's 
             var table = new ConsoleTableBuilder().FormatAsTable(objects);
             table.WriteLine();
 
-            Assert.IsTrue(table.Contains("FirstName"));
-            Assert.IsTrue(table.Contains("LastName"));
+            Assert.IsTrue(table.Contains(new ConsoleString("FirstName", ConsoleColor.Yellow)));
+            Assert.IsTrue(table.Contains(new ConsoleString("LastName", ConsoleColor.Yellow)));
             Assert.IsTrue(table.Contains("Adam"));
             Assert.IsTrue(table.Contains("Abdelhamed"));
             Assert.IsTrue(table.Contains("John"));
@@ -105,8 +105,8 @@ Alic...      Two Microsoft     The wife of the author of PowerArgs, the world's 
             var table = new ConsoleTableBuilder().FormatAsTable(objects, "FirstName LastName");
             table.WriteLine();
 
-            Assert.IsTrue(table.Contains("FirstName"));
-            Assert.IsTrue(table.Contains("LastName"));
+            Assert.IsTrue(table.Contains(new ConsoleString("FirstName", ConsoleColor.Yellow)));
+            Assert.IsTrue(table.Contains(new ConsoleString("LastName", ConsoleColor.Yellow)));
             Assert.IsTrue(table.Contains("Adam"));
             Assert.IsTrue(table.Contains("Abdelhamed"));
             Assert.IsTrue(table.Contains("John"));

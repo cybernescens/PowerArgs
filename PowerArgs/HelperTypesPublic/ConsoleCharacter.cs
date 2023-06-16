@@ -25,17 +25,17 @@ public readonly partial struct ConsoleCharacter : ICanBeAConsoleString, IEquatab
     /// </summary>
     public bool IsUnderlined { get; }
 
-    public static readonly ConsoleCharacter Default = new(
+    public static ConsoleCharacter Default => new(
         ' ',
         ConsoleString.DefaultForegroundColor,
         ConsoleString.DefaultBackgroundColor);
 
-    public static readonly ConsoleCharacter LineFeed = new(
+    public static ConsoleCharacter LineFeed => new(
         '\n',
         ConsoleString.DefaultForegroundColor,
         ConsoleString.DefaultBackgroundColor);
 
-    public static readonly ConsoleCharacter Null = new(
+    public static ConsoleCharacter Null => new(
         char.MinValue,
         ConsoleString.DefaultForegroundColor,
         ConsoleString.DefaultBackgroundColor);

@@ -32,10 +32,11 @@ namespace PowerArgs
         /// <param name="disposing">i used to know</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                DisposeManagedResources();
-            }
+            if (!disposing)
+                return;
+
+            DisposeManagedResources();
+            AfterDispose();
         }
 
         /// <summary>

@@ -7,18 +7,19 @@ public interface ILifetime : ILifetimeManager, IDisposable
     bool TryDispose();
 }
 
-public static class ILifetimeEx
+public static class LifetimeExtensions
 {
-    public static Lifetime CreateChildLifetime(this ILifetime lt)
+    public static Lifetime CreateChildLifetime(this ILifetime parent)
     {
-        var ret = new Lifetime();
-        lt.OnDisposed(
-            () => {
-                if (ret.IsExpired == false)
-                    ret.Dispose();
+        var child = new Lifetime();
+        parent.OnDisposed(
+            () =>
+            {
+                if (!child.IsExpired)
+                    child.Dispose();
             });
 
-        return ret;
+        return child;
     }
 }
 
@@ -66,7 +67,7 @@ public class Lifetime : Disposable, ILifetime
     ///     Registers an action to run when this lifetime ends
     /// </summary>
     /// <param name="cleanupCode">code to run when this lifetime ends</param>
-    /// <returns>a promis that will resolve after the cleanup code has run</returns>
+    /// <returns>a promise that will resolve after the cleanup code has run</returns>
     public void OnDisposed(Action cleanupCode)
     {
         if (IsExpired)
@@ -96,6 +97,7 @@ public class Lifetime : Disposable, ILifetime
         return true;
     }
 
+    /* I don't understand this, why throw an exception? */
     private static Lifetime CreateForeverLifetime()
     {
         var ret = new Lifetime();

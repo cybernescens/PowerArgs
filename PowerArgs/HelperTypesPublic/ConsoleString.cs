@@ -45,17 +45,17 @@ public class ConsoleString : IEnumerable<ConsoleCharacter>, IComparable<string>,
     /// <summary>
     ///     Represents an empty string.
     /// </summary>
-    public static readonly ConsoleString Empty = new(Array.Empty<ConsoleCharacter>());
+    public static ConsoleString Empty => new(Array.Empty<ConsoleCharacter>());
 
     /// <summary>
     ///     Represents a blank console character.
     /// </summary>
-    public static readonly ConsoleString Default = new(new [] { ConsoleCharacter.Default });
+    public static ConsoleString Default => new(new [] { ConsoleCharacter.Default });
 
     /// <summary>
     ///     Represents a new line.
     /// </summary>
-    public static readonly ConsoleString LineFeed = new(new [] { ConsoleCharacter.LineFeed });
+    public static ConsoleString LineFeed => new(new [] { ConsoleCharacter.LineFeed });
 
     private readonly ConsoleCharacter[] characters;
 
